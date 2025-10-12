@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { HeaderMobile } from "@/components/HeaderMobile";
 import { ProductCard, Product } from "@/components/ProductCard";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { mockProducts, categories, mockStore, CartItem } from "@/lib/mockData";
+import { apiService } from "@/lib/apiService";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
@@ -16,15 +17,55 @@ export default function Menu() {
   const [searchTerm, setSearchTerm] = useState("");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Carregar produtos da API
+  useEffect(() => {
+    const loadProducts = async () => {
+      setIsLoading(true);
+      try {
+        console.log('🔍 Carregando produtos da API...');
+        const apiProducts = await apiService.getProducts();
+        
+        // Converter produtos da API para o formato do frontend
+        const formattedProducts: Product[] = apiProducts.map(product => ({
+          id: product.id,
+          name: product.name,
+          description: product.description || '',
+          price: parseFloat(product.price),
+          image: `/placeholder.svg?height=200&width=300&text=${encodeURIComponent(product.name)}`,
+          category: product.category?.name?.toLowerCase() || 'outros',
+          available: product.available !== false
+        }));
+        
+        console.log('✅ Produtos carregados da API:', formattedProducts.length);
+        setProducts(formattedProducts);
+      } catch (error) {
+        console.error('❌ Erro ao carregar produtos:', error);
+        toast({
+          title: "Aviso",
+          description: "Usando dados locais temporariamente",
+          variant: "default"
+        });
+        // Usar produtos mock como fallback
+        setProducts(mockProducts);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter(product => {
+    return products.filter(product => {
       const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.description.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchTerm]);
+  }, [products, selectedCategory, searchTerm]);
 
   const handleAddToCart = (product: Product) => {
     mockStore.addToCart(product);

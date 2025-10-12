@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, MapPin, Phone, User, CreditCard, QrCode } from "lucide-react";
 import { mockStore, CartItem } from "@/lib/mockData";
+import { apiService, CreateOrderRequest } from "@/lib/apiService";
 import { toast } from "@/hooks/use-toast";
 
 interface CustomerInfo {
@@ -89,10 +90,30 @@ export default function Checkout() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Preparar dados para a API
+      const orderData: CreateOrderRequest = {
+        customer_name: customerInfo.name,
+        customer_phone: customerInfo.phone,
+        customer_email: `${customerInfo.phone}@temp.com`, // Email temporário
+        delivery_address: customerInfo.address,
+        payment_method: paymentMethod === 'pix' ? 'PIX' : 'CASH',
+        notes: customerInfo.observations || undefined,
+        items: cartItems.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          observations: item.observations
+        }))
+      };
+
+      console.log('📦 Enviando pedido:', orderData);
+
+      // Fazer requisição real para a API
+      const order = await apiService.createOrder(orderData);
       
-      const order = mockStore.createOrder(customerInfo, paymentMethod);
+      console.log('✅ Pedido criado:', order);
+      
+      // Limpar carrinho local
+      mockStore.clearCart();
       
       toast({
         title: "Pedido realizado!",
@@ -102,9 +123,10 @@ export default function Checkout() {
       // Navigate to order tracking
       navigate(`/pedido/${order.id}`);
     } catch (error) {
+      console.error('❌ Erro ao criar pedido:', error);
       toast({
         title: "Erro ao processar pedido",
-        description: "Tente novamente em alguns instantes",
+        description: error instanceof Error ? error.message : "Tente novamente em alguns instantes",
         variant: "destructive"
       });
     } finally {

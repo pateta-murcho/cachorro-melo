@@ -2,16 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  available: boolean;
-}
+import { Product } from "@/services/products";
 
 interface ProductCardProps {
   product: Product;
@@ -27,6 +18,13 @@ export function ProductCard({ product, onAddToCart, onProductClick }: ProductCar
     }).format(price);
   };
 
+  const getImageUrl = (image: string) => {
+    if (image.startsWith('http')) {
+      return image;
+    }
+    return `http://localhost:3001/uploads/${image}`;
+  };
+
   return (
     <Card 
       className="overflow-hidden shadow-card hover:shadow-food transition-all cursor-pointer group"
@@ -35,7 +33,7 @@ export function ProductCard({ product, onAddToCart, onProductClick }: ProductCar
       <CardHeader className="p-0">
         <div className="relative h-32 bg-gradient-subtle">
           <img
-            src={product.image}
+            src={getImageUrl(product.image)}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             onError={(e) => {
