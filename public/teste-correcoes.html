@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 TESTE CORREÇÕES - LOGIN & PEDIDOS</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #111;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            margin: 20px 0;
+            padding: 15px;
+        }
+        .test-section h2 {
+            color: #ff6600;
+            margin-top: 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .test-button {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            margin: 10px 10px 10px 0;
+            transition: all 0.3s;
+        }
+        .test-button:hover {
+            background: #ff6666;
+        }
+        .test-button.success { background: #28a745; }
+        .test-button.success:hover { background: #34ce57; }
+        
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #666;
+        }
+        .result.success { border-left-color: #00ff00; background: rgba(0, 255, 0, 0.1); }
+        .result.error { border-left-color: #ff0000; background: rgba(255, 0, 0, 0.1); }
+        .result.info { border-left-color: #0088ff; background: rgba(0, 136, 255, 0.1); }
+        
+        .log-container {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+        }
+        .log-success { color: #00ff00; }
+        .log-error { color: #ff4444; }
+        .log-info { color: #00aaff; }
+        .log-warning { color: #ffaa00; }
+        
+        input, textarea, select {
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px;
+            border-radius: 3px;
+            margin: 5px;
+            font-family: inherit;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px 0;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 TESTE CORREÇÕES 🔥<br>LOGIN ADMIN & CRIAÇÃO DE PEDIDOS</h1>
+        
+        <!-- TESTE LOGIN ADMIN -->
+        <div class="test-section">
+            <h2>🔐 TESTE LOGIN ADMIN</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3 style="color: #88ff88;">Credencial 1</h3>
+                    <button class="test-button" onclick="testarLogin('admin@cachorromelo.com', 'admin123')">
+                        Testar admin@cachorromelo.com
+                    </button>
+                </div>
+                <div>
+                    <h3 style="color: #88ff88;">Credencial 2</h3>
+                    <button class="test-button" onclick="testarLogin('admin@teste.com', '123456')">
+                        Testar admin@teste.com
+                    </button>
+                </div>
+                <div>
+                    <h3 style="color: #88ff88;">Credencial 3</h3>
+                    <button class="test-button" onclick="testarLogin('root@cachorromelo.com', 'root123')">
+                        Testar root@cachorromelo.com
+                    </button>
+                </div>
+            </div>
+            <div id="login-results"></div>
+        </div>
+        
+        <!-- TESTE CRIAÇÃO DE PEDIDOS -->
+        <div class="test-section">
+            <h2>🛒 TESTE CRIAÇÃO DE PEDIDOS</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3 style="color: #88ff88;">Formato Antigo (customer object)</h3>
+                    <button class="test-button" onclick="testarPedidoAntigo()">
+                        Testar Formato Antigo
+                    </button>
+                </div>
+                <div>
+                    <h3 style="color: #88ff88;">Formato Novo (campos diretos)</h3>
+                    <button class="test-button" onclick="testarPedidoNovo()">
+                        Testar Formato Novo
+                    </button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h3 style="color: #88ff88;">Criar Pedido Personalizado</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label>Nome:</label>
+                        <input type="text" id="customer-name" value="João Teste Silva" />
+                        
+                        <label>Telefone:</label>
+                        <input type="text" id="customer-phone" value="11999888777" />
+                        
+                        <label>Email (opcional):</label>
+                        <input type="email" id="customer-email" value="joao@teste.com" />
+                        
+                        <label>Endereço:</label>
+                        <input type="text" id="delivery-address" value="Rua das Flores, 123" />
+                    </div>
+                    <div>
+                        <label>Método de Pagamento:</label>
+                        <select id="payment-method">
+                            <option value="money">Dinheiro</option>
+                            <option value="pix">PIX</option>
+                            <option value="card">Cartão</option>
+                        </select>
+                        
+                        <label>Total (R$):</label>
+                        <input type="number" id="total" value="25.50" step="0.01" />
+                        
+                        <label>Observações:</label>
+                        <textarea id="notes" rows="3">Pedido de teste personalizado</textarea>
+                        
+                        <button class="test-button success" onclick="testarPedidoPersonalizado()" style="margin-top: 15px;">
+                            🚀 Criar Pedido Personalizado
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="pedido-results"></div>
+        </div>
+        
+        <!-- LOG DE TESTES -->
+        <div class="test-section">
+            <h2>📋 LOG DE TESTES</h2>
+            <button class="test-button" onclick="limparLogs()">🧹 Limpar Logs</button>
+            <button class="test-button success" onclick="testarTudo()">🚀 TESTAR TUDO</button>
+            <div class="log-container" id="log-container">
+                <div class="log-entry log-info">🔄 Sistema carregado. Pronto para testes.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const container = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addResult(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            const result = document.createElement('div');
+            result.className = `result ${type}`;
+            result.innerHTML = message;
+            container.appendChild(result);
+        }
+        
+        async function testarLogin(email, password) {
+            log(`🔐 Testando login: ${email}`, 'info');
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Login OK: ${data.admin.name} (${data.admin.email})`, 'success');
+                    addResult('login-results', `✅ ${email}: Login realizado com sucesso! Admin: ${data.admin.name}`, 'success');
+                } else {
+                    log(`❌ Login falhou: ${data.error?.message || 'Erro desconhecido'}`, 'error');
+                    addResult('login-results', `❌ ${email}: ${data.error?.message || 'Falha no login'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Erro na requisição: ${error.message}`, 'error');
+                addResult('login-results', `❌ ${email}: Erro de conexão - ${error.message}`, 'error');
+            }
+        }
+        
+        async function testarPedidoAntigo() {
+            log('🛒 Testando formato antigo de pedido...', 'info');
+            
+            const pedido = {
+                customer: {
+                    name: 'João Formato Antigo',
+                    phone: '11999000111',
+                    email: 'joao.antigo@teste.com'
+                },
+                items: [
+                    { productId: '1', name: 'Hot Dog Tradicional', quantity: 2, price: 12.50 }
+                ],
+                total: 25.00,
+                deliveryAddress: 'Rua Formato Antigo, 456',
+                paymentMethod: 'money'
+            };
+            
+            await enviarPedido(pedido, 'Formato Antigo');
+        }
+        
+        async function testarPedidoNovo() {
+            log('🛒 Testando formato novo de pedido...', 'info');
+            
+            const pedido = {
+                customer_name: 'Maria Formato Novo',
+                customer_phone: '11999000222',
+                customer_email: 'maria.nova@teste.com',
+                delivery_address: 'Rua Formato Novo, 789',
+                payment_method: 'pix',
+                total: 18.50,
+                notes: 'Pedido no formato novo',
+                items: [
+                    { product_id: '2', quantity: 1 }
+                ]
+            };
+            
+            await enviarPedido(pedido, 'Formato Novo');
+        }
+        
+        async function testarPedidoPersonalizado() {
+            log('🛒 Criando pedido personalizado...', 'info');
+            
+            const pedido = {
+                customer_name: document.getElementById('customer-name').value,
+                customer_phone: document.getElementById('customer-phone').value,
+                customer_email: document.getElementById('customer-email').value,
+                delivery_address: document.getElementById('delivery-address').value,
+                payment_method: document.getElementById('payment-method').value,
+                total: parseFloat(document.getElementById('total').value),
+                notes: document.getElementById('notes').value,
+                items: [
+                    { product_id: 'custom-1', quantity: 1 }
+                ]
+            };
+            
+            await enviarPedido(pedido, 'Personalizado');
+        }
+        
+        async function enviarPedido(pedido, tipo) {
+            try {
+                const response = await fetch('http://localhost:3001/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pedido)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Pedido ${tipo} criado: ${data.data.orderNumber || data.data.order_number}`, 'success');
+                    addResult('pedido-results', `✅ ${tipo}: Pedido criado com sucesso! Número: ${data.data.orderNumber || data.data.order_number}`, 'success');
+                } else {
+                    log(`❌ Falha pedido ${tipo}: ${data.error?.message || 'Erro desconhecido'}`, 'error');
+                    addResult('pedido-results', `❌ ${tipo}: ${data.error?.message || 'Falha na criação'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Erro pedido ${tipo}: ${error.message}`, 'error');
+                addResult('pedido-results', `❌ ${tipo}: Erro de conexão - ${error.message}`, 'error');
+            }
+        }
+        
+        function limparLogs() {
+            document.getElementById('log-container').innerHTML = '';
+            document.getElementById('login-results').innerHTML = '';
+            document.getElementById('pedido-results').innerHTML = '';
+            log('🧹 Logs limpos. Sistema pronto para novos testes.', 'info');
+        }
+        
+        async function testarTudo() {
+            log('🚀🚀🚀 INICIANDO TESTE COMPLETO DE CORREÇÕES 🚀🚀🚀', 'info');
+            
+            // Testa todos os logins
+            await testarLogin('admin@cachorromelo.com', 'admin123');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testarLogin('admin@teste.com', '123456');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testarLogin('root@cachorromelo.com', 'root123');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Testa formatos de pedido
+            await testarPedidoAntigo();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testarPedidoNovo();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testarPedidoPersonalizado();
+            
+            log('🔥🔥🔥 TESTE COMPLETO FINALIZADO! 🔥🔥🔥', 'success');
+        }
+        
+        // Auto-test initial connection
+        setTimeout(async () => {
+            log('🔍 Verificando conexão inicial...', 'info');
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                if (response.ok) {
+                    log('✅ Backend online e pronto para testes!', 'success');
+                } else {
+                    log('❌ Backend offline - verifique se está rodando', 'error');
+                }
+            } catch (error) {
+                log('❌ Erro de conexão - verifique se o backend está rodando', 'error');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

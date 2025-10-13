@@ -22,6 +22,7 @@ class ApiService {
   ): Promise<ApiResponse<T>> {
     try {
       const url = `${this.baseURL}${endpoint}`;
+      console.log('📡 API Request:', url, options);
       
       const config: RequestInit = {
         headers: {
@@ -34,13 +35,16 @@ class ApiService {
       const response = await fetch(url, config);
       const data = await response.json();
 
+      console.log('📡 API Response:', response.status, data);
+
       if (!response.ok) {
+        console.error('❌ API Error:', data);
         throw new Error(data.error?.message || 'Erro na requisição');
       }
 
       return data;
     } catch (error) {
-      console.error('API Error:', error);
+      console.error('❌ Network Error:', error);
       return {
         success: false,
         error: {

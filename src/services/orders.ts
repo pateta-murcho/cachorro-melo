@@ -61,7 +61,12 @@ export interface Order {
 
 class OrderService {
   async createOrder(orderData: CreateOrderRequest): Promise<ApiResponse<Order>> {
-    return apiService.post<Order>('/orders', orderData);
+    console.log('🛒 OrderService: createOrder chamado com dados:', orderData);
+    
+    const result = await apiService.post<Order>('/orders', orderData);
+    console.log('🛒 OrderService: resultado da criação:', result);
+    
+    return result;
   }
 
   async getOrder(id: string): Promise<ApiResponse<Order>> {

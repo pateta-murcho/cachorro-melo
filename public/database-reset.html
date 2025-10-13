@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 RESET COMPLETO DO BANCO DE DADOS</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #000;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #00ff00;
+        }
+        .button {
+            background: #ff4444;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .button:hover { background: #ff6666; }
+        .button.danger { background: #cc0000; }
+        .button.success { background: #44ff44; color: black; }
+        .log {
+            background: #222;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #444;
+        }
+        .error { color: #ff4444; }
+        .success { color: #44ff44; }
+        .warning { color: #ffaa44; }
+        .info { color: #44aaff; }
+        h1 { color: #ffff00; text-align: center; }
+        h2 { color: #ff8844; border-bottom: 2px solid #ff8844; }
+        .sql-script {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥🔥🔥 RESET COMPLETO DO BANCO DE DADOS 🔥🔥🔥</h1>
+        
+        <h2>⚠️ ATENÇÃO: OPERAÇÃO DESTRUTIVA ⚠️</h2>
+        <p>Esta operação vai <strong>DELETAR TODOS OS DADOS</strong> do banco e recriar tudo do zero!</p>
+        
+        <div>
+            <button class="button danger" onclick="resetDatabase()">🔥 DELETAR TUDO E RECRIAR</button>
+            <button class="button" onclick="testConnection()">🔍 TESTAR CONEXÃO</button>
+            <button class="button" onclick="viewTables()">📋 VER TABELAS ATUAIS</button>
+            <button class="button success" onclick="insertSampleData()">➕ INSERIR DADOS TESTE</button>
+        </div>
+
+        <div id="logs" class="log"></div>
+        
+        <h2>📜 Script SQL que será executado:</h2>
+        <div class="sql-script" id="sql-script">Carregando script...</div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://lwwtfodpnqyceuqomopj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3d3Rmb2RwbnF5Y2V1cW9tb3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQxMzA5MzEsImV4cCI6MjA0OTcwNjkzMX0.o7WYXj7FNRGKRHpqAZkKJ2cUDDMX-h82G-Lrpb_w-Ew';
+
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `<span class="${type}">[${timestamp}] ${message}</span>\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        async function testConnection() {
+            log('🔍 Testando conexão com Supabase...', 'info');
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                if (response.ok) {
+                    log('✅ Conexão com Supabase OK!', 'success');
+                } else {
+                    log(`❌ Erro na conexão: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Erro na conexão: ${error.message}`, 'error');
+            }
+        }
+
+        async function viewTables() {
+            log('📋 Listando tabelas atuais...', 'info');
+            try {
+                // Tentar listar algumas tabelas conhecidas
+                const tables = ['products', 'categories', 'orders', 'customers', 'admins'];
+                
+                for (const table of tables) {
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=count`, {
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                'Prefer': 'count=exact'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const count = response.headers.get('Content-Range')?.split('/')[1] || '0';
+                            log(`✅ Tabela ${table}: ${count} registros`, 'success');
+                        } else {
+                            log(`⚠️ Tabela ${table}: não encontrada ou sem acesso`, 'warning');
+                        }
+                    } catch (err) {
+                        log(`❌ Erro ao verificar tabela ${table}: ${err.message}`, 'error');
+                    }
+                }
+            } catch (error) {
+                log(`❌ Erro ao listar tabelas: ${error.message}`, 'error');
+            }
+        }
+
+        async function resetDatabase() {
+            if (!confirm('⚠️ ATENÇÃO! Esta operação vai DELETAR TODOS OS DADOS do banco. Tem certeza?')) {
+                return;
+            }
+            
+            if (!confirm('🔥 ÚLTIMA CHANCE! Todos os dados serão perdidos permanentemente. Confirma?')) {
+                return;
+            }
+
+            log('🔥🔥🔥 INICIANDO RESET COMPLETO DO BANCO DE DADOS 🔥🔥🔥', 'warning');
+            
+            // Lista de comandos SQL para executar
+            const resetCommands = [
+                // 1. Deletar tabelas
+                "DROP TABLE IF EXISTS order_items CASCADE",
+                "DROP TABLE IF EXISTS orders CASCADE", 
+                "DROP TABLE IF EXISTS products CASCADE",
+                "DROP TABLE IF EXISTS categories CASCADE",
+                "DROP TABLE IF EXISTS customers CASCADE",
+                "DROP TABLE IF EXISTS admins CASCADE",
+                
+                // 2. Criar tabela categories
+                `CREATE TABLE categories (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    name VARCHAR(100) NOT NULL UNIQUE,
+                    slug VARCHAR(100) NOT NULL UNIQUE,
+                    description TEXT,
+                    image_url TEXT,
+                    active BOOLEAN DEFAULT true,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                )`,
+                
+                // 3. Criar tabela products
+                `CREATE TABLE products (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+                    name VARCHAR(200) NOT NULL,
+                    slug VARCHAR(200) NOT NULL UNIQUE,
+                    description TEXT,
+                    price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
+                    image_url TEXT,
+                    available BOOLEAN DEFAULT true,
+                    featured BOOLEAN DEFAULT false,
+                    ingredients TEXT[],
+                    allergens TEXT[],
+                    preparation_time INTEGER DEFAULT 15,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                )`,
+                
+                // 4. Criar tabela customers
+                `CREATE TABLE customers (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    name VARCHAR(200) NOT NULL,
+                    email VARCHAR(255) UNIQUE,
+                    phone VARCHAR(20) NOT NULL,
+                    address TEXT NOT NULL,
+                    neighborhood VARCHAR(100),
+                    city VARCHAR(100) DEFAULT 'São Paulo',
+                    state VARCHAR(2) DEFAULT 'SP',
+                    zip_code VARCHAR(10),
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                )`,
+                
+                // 5. Criar tabela orders
+                `CREATE TABLE orders (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+                    order_number INTEGER GENERATED ALWAYS AS IDENTITY,
+                    status VARCHAR(50) DEFAULT 'pending',
+                    total_amount DECIMAL(10,2) NOT NULL CHECK (total_amount >= 0),
+                    delivery_fee DECIMAL(10,2) DEFAULT 5.00,
+                    payment_method VARCHAR(50) DEFAULT 'money',
+                    payment_status VARCHAR(50) DEFAULT 'pending',
+                    delivery_address TEXT NOT NULL,
+                    delivery_time TIMESTAMP WITH TIME ZONE,
+                    notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                )`,
+                
+                // 6. Criar tabela order_items
+                `CREATE TABLE order_items (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+                    product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+                    product_name VARCHAR(200) NOT NULL,
+                    quantity INTEGER NOT NULL CHECK (quantity > 0),
+                    unit_price DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
+                    total_price DECIMAL(10,2) NOT NULL CHECK (total_price >= 0),
+                    notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                )`,
+                
+                // 7. Criar tabela admins
+                `CREATE TABLE admins (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    name VARCHAR(200) NOT NULL,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    password_hash VARCHAR(255) NOT NULL,
+                    role VARCHAR(50) DEFAULT 'admin',
+                    active BOOLEAN DEFAULT true,
+                    last_login TIMESTAMP WITH TIME ZONE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                )`
+            ];
+
+            log('⚠️ IMPORTANTE: Executar os comandos SQL manualmente no Supabase Dashboard!', 'warning');
+            log('🔗 Acesse: https://supabase.com/dashboard/project/lwwtfodpnqyceuqomopj/editor', 'info');
+            log('📋 Copie e execute cada comando abaixo no SQL Editor:', 'info');
+            
+            resetCommands.forEach((cmd, index) => {
+                log(`\n-- Comando ${index + 1}:\n${cmd};\n`, 'info');
+            });
+            
+            log('✅ Script completo gerado! Execute no Supabase Dashboard.', 'success');
+        }
+
+        async function insertSampleData() {
+            log('➕ Inserindo dados de teste...', 'info');
+            
+            const sampleData = [
+                // Categorias
+                `INSERT INTO categories (name, slug, description) VALUES
+                ('Hot Dogs', 'hot-dogs', 'Deliciosos hot dogs com ingredientes frescos'),
+                ('Combos', 'combos', 'Combos especiais com hot dog + acompanhamento + bebida'),
+                ('Bebidas', 'bebidas', 'Bebidas geladas para acompanhar'),
+                ('Acompanhamentos', 'acompanhamentos', 'Batata frita, onion rings e outros acompanhamentos')`,
+                
+                // Admin
+                `INSERT INTO admins (name, email, password_hash, role) VALUES
+                ('Administrador', 'admin@cachorromelo.com', 'admin123', 'admin')`
+            ];
+            
+            log('📋 Comandos para inserir dados de teste:', 'info');
+            sampleData.forEach((cmd, index) => {
+                log(`\n-- Dados ${index + 1}:\n${cmd};\n`, 'info');
+            });
+        }
+
+        // Carregar script SQL na tela
+        window.addEventListener('load', () => {
+            const sqlScript = document.getElementById('sql-script');
+            sqlScript.textContent = `
+-- RESET COMPLETO DO BANCO DE DADOS
+-- Execute estes comandos no Supabase Dashboard SQL Editor
+
+-- 1. Deletar todas as tabelas
+DROP TABLE IF EXISTS order_items CASCADE;
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS categories CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
+DROP TABLE IF EXISTS admins CASCADE;
+
+-- 2. Recriar estrutura completa
+-- (Veja os logs acima para comandos detalhados)
+            `;
+            
+            log('🚀 Sistema de Reset do Banco carregado!', 'success');
+            log('⚠️ LEMBRE-SE: Execute os comandos no Supabase Dashboard!', 'warning');
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,13 @@
 {
   "mcpServers": {
     "supabase": {
-      "url": "https://mcp.supabase.com/mcp?project_ref=lwwtfodpnqyceuqomopj"
+      "url": "https://mcp.supabase.com/mcp",
+      "arguments": [
+        "--project-ref",
+        "lwwtfodpnqyceuqomopj",
+        "--features",
+        "docs,account,database,debugging,development,functions,branching,storage"
+      ]
     }
   }
 }

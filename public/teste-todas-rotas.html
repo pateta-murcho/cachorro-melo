@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 TESTE COMPLETO - TODAS AS ROTAS</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #111;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            margin: 20px 0;
+            padding: 15px;
+        }
+        .section h2 {
+            color: #ff6600;
+            margin-top: 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .route-test {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #222;
+            border-radius: 3px;
+            border-left: 4px solid #666;
+        }
+        .route-test.success { border-left-color: #00ff00; background: rgba(0, 255, 0, 0.1); }
+        .route-test.error { border-left-color: #ff0000; background: rgba(255, 0, 0, 0.1); }
+        .route-test.warning { border-left-color: #ffaa00; background: rgba(255, 170, 0, 0.1); }
+        
+        .route-info {
+            flex: 1;
+        }
+        .route-method {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .method-get { background: #28a745; }
+        .method-post { background: #007bff; }
+        .method-put { background: #ffc107; color: #000; }
+        .method-delete { background: #dc3545; }
+        
+        .route-status {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        .status-ok { background: #28a745; color: white; }
+        .status-error { background: #dc3545; color: white; }
+        .status-pending { background: #6c757d; color: white; }
+        
+        .log-container {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+            border-radius: 2px;
+        }
+        .log-info { color: #00aaff; }
+        .log-success { color: #00ff00; }
+        .log-warning { color: #ffaa00; }
+        .log-error { color: #ff4444; }
+        
+        .button {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        .button:hover {
+            background: #ff6666;
+            transform: scale(1.05);
+        }
+        .button.success { background: #28a745; }
+        .button.success:hover { background: #34ce57; }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 TESTE COMPLETO - TODAS AS ROTAS 🔥</h1>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total-routes">0</div>
+                <div class="stat-label">Total de Rotas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="success-routes" style="color: #00ff00;">0</div>
+                <div class="stat-label">Sucessos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="error-routes" style="color: #ff4444;">0</div>
+                <div class="stat-label">Falhas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pending-routes" style="color: #6c757d;">0</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="button" onclick="testarTodasRotas()">🚀 TESTAR TODAS AS ROTAS</button>
+            <button class="button success" onclick="abrirFrontend()">🌐 ABRIR FRONTEND</button>
+            <button class="button" onclick="limparResultados()">🧹 LIMPAR</button>
+        </div>
+        
+        <!-- ROTAS BACKEND -->
+        <div class="section">
+            <h2>🔧 ROTAS BACKEND (API)</h2>
+            <div id="backend-routes">
+                <div class="route-test" data-url="http://localhost:3001/health" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/health</span>
+                        <div style="font-size: 12px; color: #888;">Health check do servidor</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:3001/api/products" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/api/products</span>
+                        <div style="font-size: 12px; color: #888;">Listar todos os produtos</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:3001/api/categories" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/api/categories</span>
+                        <div style="font-size: 12px; color: #888;">Listar todas as categorias</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:3001/api/orders" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/api/orders</span>
+                        <div style="font-size: 12px; color: #888;">Listar todos os pedidos</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:3001/api/orders" data-method="POST" data-body='{"customer":{"name":"Teste","phone":"11999999999"},"items":[{"name":"Hot Dog","quantity":1,"price":10}],"total":10,"deliveryAddress":"Rua Teste","paymentMethod":"money"}'>
+                    <div class="route-info">
+                        <span class="route-method method-post">POST</span>
+                        <span>/api/orders</span>
+                        <div style="font-size: 12px; color: #888;">Criar novo pedido</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:3001/api/auth/login" data-method="POST" data-body='{"email":"admin@cachorromelo.com","password":"admin123"}'>
+                    <div class="route-info">
+                        <span class="route-method method-post">POST</span>
+                        <span>/api/auth/login</span>
+                        <div style="font-size: 12px; color: #888;">Login do administrador</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:3001/api/admin/dashboard" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/api/admin/dashboard</span>
+                        <div style="font-size: 12px; color: #888;">Dashboard administrativo</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:3001/api/test-supabase" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/api/test-supabase</span>
+                        <div style="font-size: 12px; color: #888;">Teste de conexão Supabase</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ROTAS FRONTEND -->
+        <div class="section">
+            <h2>🌐 ROTAS FRONTEND (PÁGINAS)</h2>
+            <div id="frontend-routes">
+                <div class="route-test" data-url="http://localhost:8080/" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/</span>
+                        <div style="font-size: 12px; color: #888;">Página inicial</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:8080/menu" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/menu</span>
+                        <div style="font-size: 12px; color: #888;">Cardápio de produtos</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:8080/checkout" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/checkout</span>
+                        <div style="font-size: 12px; color: #888;">Finalizar pedido</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:8080/admin" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/admin</span>
+                        <div style="font-size: 12px; color: #888;">Painel administrativo</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:8080/admin/login" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/admin/login</span>
+                        <div style="font-size: 12px; color: #888;">Login administrativo</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:8080/admin/dashboard" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/admin/dashboard</span>
+                        <div style="font-size: 12px; color: #888;">Dashboard administrativo</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:8080/admin/products" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/admin/products</span>
+                        <div style="font-size: 12px; color: #888;">Gerenciar produtos</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+                
+                <div class="route-test" data-url="http://localhost:8080/admin/orders" data-method="GET">
+                    <div class="route-info">
+                        <span class="route-method method-get">GET</span>
+                        <span>/admin/orders</span>
+                        <div style="font-size: 12px; color: #888;">Gerenciar pedidos</div>
+                    </div>
+                    <div class="route-status status-pending">PENDENTE</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📋 LOG DE TESTES</h2>
+            <div class="log-container" id="log-container">
+                <div class="log-entry log-info">🔄 Sistema carregado. Clique em "TESTAR TODAS AS ROTAS" para iniciar.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            total: 0,
+            success: 0,
+            error: 0,
+            pending: 0
+        };
+        
+        function log(message, type = 'info') {
+            const container = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function updateStats() {
+            document.getElementById('total-routes').textContent = testResults.total;
+            document.getElementById('success-routes').textContent = testResults.success;
+            document.getElementById('error-routes').textContent = testResults.error;
+            document.getElementById('pending-routes').textContent = testResults.pending;
+        }
+        
+        function updateRouteStatus(element, status, message) {
+            const statusElement = element.querySelector('.route-status');
+            statusElement.className = `route-status status-${status}`;
+            statusElement.textContent = status === 'ok' ? 'OK' : status === 'error' ? 'ERRO' : 'PENDENTE';
+            
+            if (status === 'ok') {
+                element.className = 'route-test success';
+            } else if (status === 'error') {
+                element.className = 'route-test error';
+            }
+        }
+        
+        async function testarRota(element) {
+            const url = element.dataset.url;
+            const method = element.dataset.method;
+            const body = element.dataset.body;
+            
+            const routeName = element.querySelector('span:nth-child(2)').textContent;
+            
+            log(`🧪 Testando ${method} ${routeName}...`, 'info');
+            
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+                
+                if (body && method === 'POST') {
+                    options.body = body;
+                }
+                
+                const response = await fetch(url, options);
+                
+                if (response.ok) {
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        data = await response.text();
+                    }
+                    
+                    updateRouteStatus(element, 'ok');
+                    testResults.success++;
+                    testResults.pending--;
+                    
+                    if (data && data.success !== undefined) {
+                        if (data.success) {
+                            log(`✅ ${method} ${routeName}: OK ${data.data ? `(${data.data.length || 0} items)` : ''}`, 'success');
+                        } else {
+                            log(`⚠️ ${method} ${routeName}: ${data.error?.message || 'Erro desconhecido'}`, 'warning');
+                        }
+                    } else {
+                        log(`✅ ${method} ${routeName}: OK (${response.status})`, 'success');
+                    }
+                } else {
+                    updateRouteStatus(element, 'error');
+                    testResults.error++;
+                    testResults.pending--;
+                    log(`❌ ${method} ${routeName}: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                updateRouteStatus(element, 'error');
+                testResults.error++;
+                testResults.pending--;
+                log(`❌ ${method} ${routeName}: ${error.message}`, 'error');
+            }
+            
+            updateStats();
+        }
+        
+        async function testarTodasRotas() {
+            log('🚀🚀🚀 INICIANDO TESTE DE TODAS AS ROTAS 🚀🚀🚀', 'info');
+            
+            const routes = document.querySelectorAll('.route-test');
+            testResults = {
+                total: routes.length,
+                success: 0,
+                error: 0,
+                pending: routes.length
+            };
+            
+            updateStats();
+            
+            // Reset all routes to pending
+            routes.forEach(route => {
+                updateRouteStatus(route, 'pending');
+            });
+            
+            log(`📊 Total de rotas a testar: ${routes.length}`, 'info');
+            
+            // Test backend routes first
+            log('🔧 Testando rotas do BACKEND...', 'info');
+            const backendRoutes = document.querySelectorAll('#backend-routes .route-test');
+            for (const route of backendRoutes) {
+                await testarRota(route);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait between tests
+            }
+            
+            // Then test frontend routes
+            log('🌐 Testando rotas do FRONTEND...', 'info');
+            const frontendRoutes = document.querySelectorAll('#frontend-routes .route-test');
+            for (const route of frontendRoutes) {
+                await testarRota(route);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait between tests
+            }
+            
+            // Final summary
+            log('🔥🔥🔥 TODOS OS TESTES CONCLUÍDOS! 🔥🔥🔥', 'success');
+            log(`📊 Resultados: ${testResults.success} sucessos, ${testResults.error} falhas`, 'info');
+            
+            if (testResults.error === 0) {
+                log('✅ SISTEMA 100% FUNCIONAL! Todas as rotas respondendo corretamente!', 'success');
+            } else if (testResults.success > testResults.error) {
+                log(`⚠️ Sistema funcional com algumas falhas. Taxa de sucesso: ${Math.round((testResults.success / testResults.total) * 100)}%`, 'warning');
+            } else {
+                log('❌ Sistema com problemas críticos. Verifique as configurações.', 'error');
+            }
+        }
+        
+        function limparResultados() {
+            document.getElementById('log-container').innerHTML = '';
+            const routes = document.querySelectorAll('.route-test');
+            routes.forEach(route => {
+                updateRouteStatus(route, 'pending');
+            });
+            testResults = { total: 0, success: 0, error: 0, pending: 0 };
+            updateStats();
+            log('🧹 Resultados limpos. Sistema pronto para novos testes.', 'info');
+        }
+        
+        function abrirFrontend() {
+            window.open('http://localhost:8080', '_blank');
+        }
+        
+        // Initialize stats
+        setTimeout(() => {
+            const routes = document.querySelectorAll('.route-test');
+            testResults.total = routes.length;
+            testResults.pending = routes.length;
+            updateStats();
+        }, 100);
+    </script>
+</body>
+</html>

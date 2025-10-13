@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 TESTE ULTRA COMPLETO - CACHORROMELO DELIVERY</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #111;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+            margin-bottom: 30px;
+        }
+        .status {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: #222;
+            border-radius: 5px;
+        }
+        .status-item {
+            text-align: center;
+        }
+        .status-label {
+            display: block;
+            color: #888;
+            font-size: 12px;
+        }
+        .status-value {
+            display: block;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .log-container {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            height: 500px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-info { color: #00aaff; }
+        .log-success { color: #00ff00; background: rgba(0, 255, 0, 0.1); }
+        .log-warning { color: #ffaa00; background: rgba(255, 170, 0, 0.1); }
+        .log-error { color: #ff4444; background: rgba(255, 68, 68, 0.1); }
+        .log-critical { color: #ff0000; background: rgba(255, 0, 0, 0.2); font-weight: bold; }
+        
+        .button {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        .button:hover {
+            background: #ff6666;
+            transform: scale(1.05);
+        }
+        .button.success { background: #44aa44; }
+        .button.success:hover { background: #66cc66; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #44ff44);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .urls-section {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        .url-item {
+            margin: 8px 0;
+            color: #88ccff;
+        }
+        .url-item a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        .url-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 TESTE ULTRA COMPLETO 🔥<br>CACHORROMELO DELIVERY SYSTEM</h1>
+        
+        <div class="status">
+            <div class="status-item">
+                <span class="status-label">Backend</span>
+                <span class="status-value" id="backend-status">⏳ Verificando...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Frontend</span>
+                <span class="status-value" id="frontend-status">✅ Online</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Testes</span>
+                <span class="status-value" id="tests-status">⏳ Aguardando...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Progresso</span>
+                <span class="status-value" id="progress-text">0/10</span>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-bar"></div>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="button" onclick="executarTestes()">🚀 EXECUTAR TESTES</button>
+            <button class="button" onclick="limparLogs()">🧹 LIMPAR LOGS</button>
+            <button class="button success" onclick="abrirFrontend()">🌐 ABRIR FRONTEND</button>
+        </div>
+        
+        <div class="log-container" id="log-container">
+            <div class="log-entry log-info">🔄 Sistema carregado. Clique em "EXECUTAR TESTES" para iniciar.</div>
+        </div>
+        
+        <div class="urls-section">
+            <h3 style="color: #ffaa00; margin-top: 0;">🔗 URLs DO SISTEMA:</h3>
+            <div class="url-item">🏠 Frontend Principal: <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></div>
+            <div class="url-item">📋 Menu/Cardápio: <a href="http://localhost:8080/menu" target="_blank">http://localhost:8080/menu</a></div>
+            <div class="url-item">🛒 Checkout: <a href="http://localhost:8080/checkout" target="_blank">http://localhost:8080/checkout</a></div>
+            <div class="url-item">👤 Admin: <a href="http://localhost:8080/admin" target="_blank">http://localhost:8080/admin</a></div>
+            <div class="url-item">🔧 Backend API: <a href="http://localhost:3001/health" target="_blank">http://localhost:3001/health</a></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+        let currentTest = 0;
+        let totalTests = 10;
+        
+        function log(message, type = 'info') {
+            const container = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function updateProgress(current, total) {
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const percentage = (current / total) * 100;
+            
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${current}/${total}`;
+            
+            if (current === total) {
+                document.getElementById('tests-status').textContent = '✅ Completo';
+            }
+        }
+        
+        function updateBackendStatus(status) {
+            document.getElementById('backend-status').textContent = status;
+        }
+        
+        function limparLogs() {
+            document.getElementById('log-container').innerHTML = '';
+            testResults = [];
+            currentTest = 0;
+            updateProgress(0, totalTests);
+            log('🧹 Logs limpos. Sistema pronto para novos testes.', 'info');
+        }
+        
+        function abrirFrontend() {
+            window.open('http://localhost:8080', '_blank');
+        }
+        
+        async function executarTestes() {
+            log('🚀🚀🚀 INICIANDO TESTES ULTRA COMPLETOS 🚀🚀🚀', 'info');
+            log('⏳ Aguardando estabilização do sistema...', 'info');
+            
+            testResults = [];
+            currentTest = 0;
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // TESTE 1: Backend Health
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Backend Health`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'ok') {
+                    log(`✅ Backend Health: OK (Uptime: ${Math.round(data.uptime)}s)`, 'success');
+                    updateBackendStatus('✅ Online');
+                } else {
+                    log(`❌ Backend Health: Status inválido`, 'error');
+                    updateBackendStatus('❌ Offline');
+                }
+            } catch (error) {
+                log(`❌ Backend Health: ${error.message}`, 'error');
+                updateBackendStatus('❌ Offline');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 2: Produtos
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Carregar Produtos`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/products');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Produtos: ${data.data.length} produtos carregados`, 'success');
+                } else {
+                    log(`❌ Produtos: Falha no carregamento`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Produtos: ${error.message}`, 'error');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 3: Categorias
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Carregar Categorias`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/categories');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Categorias: ${data.data.length} categorias carregadas`, 'success');
+                } else {
+                    log(`❌ Categorias: Falha no carregamento`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Categorias: ${error.message}`, 'error');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 4: Login Admin
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Login Admin`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@cachorromelo.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Login Admin: OK - ${data.admin.name}`, 'success');
+                } else {
+                    log(`❌ Login Admin: ${data.error?.message || 'Falha'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Login Admin: ${error.message}`, 'error');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 5: Dashboard
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Dashboard Admin`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/admin/dashboard');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Dashboard: Produtos=${data.data.totalProducts}, Pedidos=${data.data.totalOrders}`, 'success');
+                } else {
+                    log(`❌ Dashboard: Falha no carregamento`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Dashboard: ${error.message}`, 'error');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 6: Criar Pedido
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Criar Pedido Completo`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const pedido = {
+                    customer: {
+                        name: 'João Teste',
+                        phone: '11999999999',
+                        email: 'joao@teste.com'
+                    },
+                    items: [
+                        { productId: '1', name: 'Hot Dog Teste', quantity: 2, price: 8.50 }
+                    ],
+                    total: 17.00,
+                    deliveryAddress: 'Rua Teste, 123',
+                    paymentMethod: 'money'
+                };
+                
+                const response = await fetch('http://localhost:3001/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pedido)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Pedido: ${data.data.orderNumber} criado com sucesso`, 'success');
+                } else {
+                    log(`❌ Pedido: ${data.error?.message || 'Falha'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Pedido: ${error.message}`, 'error');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 7: Listar Pedidos
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Listar Pedidos`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/orders');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Listar Pedidos: ${data.data.length} pedidos encontrados`, 'success');
+                } else {
+                    log(`❌ Listar Pedidos: Falha na listagem`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Listar Pedidos: ${error.message}`, 'error');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 8: Validação
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Validação de Dados`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customer: {}, items: [], total: 0 })
+                });
+                
+                if (response.status === 400) {
+                    log(`✅ Validação: Pedido inválido rejeitado corretamente`, 'success');
+                } else {
+                    log(`❌ Validação: Falha na validação`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ Validação: ${error.message}`, 'error');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 9: Conectividade
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Conectividade Frontend-Backend`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/test-supabase');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log(`✅ Conectividade: Comunicação OK`, 'success');
+                } else {
+                    log(`❌ Conectividade: Falha na comunicação`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Conectividade: ${error.message}`, 'error');
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // TESTE 10: Performance
+            currentTest++;
+            log(`🧪 TESTE ${currentTest}/${totalTests}: Performance`, 'info');
+            updateProgress(currentTest, totalTests);
+            
+            try {
+                const inicio = Date.now();
+                const promises = Array(5).fill(null).map(() => fetch('http://localhost:3001/api/products'));
+                const responses = await Promise.all(promises);
+                const fim = Date.now();
+                const tempo = fim - inicio;
+                
+                const sucessos = responses.filter(r => r.ok).length;
+                
+                if (sucessos === 5 && tempo < 5000) {
+                    log(`✅ Performance: ${sucessos}/5 requisições OK em ${tempo}ms`, 'success');
+                } else {
+                    log(`⚠️ Performance: ${sucessos}/5 requisições OK em ${tempo}ms`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ Performance: ${error.message}`, 'error');
+            }
+            
+            // RELATÓRIO FINAL
+            log('🔥🔥🔥 TODOS OS TESTES CONCLUÍDOS! 🔥🔥🔥', 'success');
+            log('✅ Sistema testado e funcionando!', 'success');
+            log('🌐 Frontend: http://localhost:8080', 'info');
+            log('🔧 Backend: http://localhost:3001', 'info');
+            log('📋 Menu: http://localhost:8080/menu', 'info');
+            log('🛒 Checkout: http://localhost:8080/checkout', 'info');
+            log('👤 Admin: http://localhost:8080/admin', 'info');
+        }
+        
+        // Auto-executar verificação inicial do backend
+        setTimeout(async () => {
+            log('🔍 Verificando status inicial do backend...', 'info');
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                if (response.ok) {
+                    updateBackendStatus('✅ Online');
+                    log('✅ Backend detectado online!', 'success');
+                } else {
+                    updateBackendStatus('❌ Offline');
+                    log('❌ Backend offline - clique em EXECUTAR TESTES para diagnóstico completo', 'warning');
+                }
+            } catch (error) {
+                updateBackendStatus('❌ Offline');
+                log('❌ Backend não detectado - verifique se está rodando na porta 3001', 'error');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

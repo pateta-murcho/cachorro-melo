@@ -28,6 +28,8 @@ class ProductService {
     featured?: boolean;
     available?: boolean;
   }): Promise<ApiResponse<Product[]>> {
+    console.log('📦 ProductService: getProducts chamado com filtros:', filters);
+    
     const params = new URLSearchParams();
     
     if (filters?.categoryId) {
@@ -45,7 +47,11 @@ class ProductService {
     const queryString = params.toString();
     const endpoint = queryString ? `/products?${queryString}` : '/products';
     
-    return apiService.get<Product[]>(endpoint);
+    console.log('📦 ProductService: fazendo requisição para:', endpoint);
+    const result = await apiService.get<Product[]>(endpoint);
+    console.log('📦 ProductService: resultado:', result);
+    
+    return result;
   }
 
   async getProduct(id: string): Promise<ApiResponse<Product>> {
