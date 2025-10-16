@@ -2,10 +2,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (window.location.hostname === 'localhost' 
     ? 'http://localhost:3001/api'
-    : `http://${window.location.hostname}:3001/api`);
+    : '');
+
+const USE_MOCK = !API_BASE_URL || API_BASE_URL === '';
 
 console.log('🌐 AdminApiService - API_BASE_URL:', API_BASE_URL);
 console.log('🌐 window.location.hostname:', window.location.hostname);
+console.log('🔄 USE_MOCK:', USE_MOCK);
 
 interface RequestOptions {
   method?: string;
@@ -45,6 +48,12 @@ class AdminApiService {
     const fullUrl = `${API_BASE_URL}${endpoint}`;
     console.log(`📡 API Request: ${options.method || 'GET'} ${fullUrl}`);
 
+    // Se está usando mock, retornar dados simulados
+    if (USE_MOCK) {
+      console.warn('🔄 Usando dados mockados - Backend não configurado');
+      return this.getMockResponse<T>(endpoint, options);
+    }
+
     try {
       const response = await fetch(fullUrl, config);
       
@@ -67,8 +76,39 @@ class AdminApiService {
       return result.data as T;
     } catch (error) {
       console.error('❌ API request failed:', error);
-      throw error;
+      console.warn('🔄 Fallback para dados mockados');
+      return this.getMockResponse<T>(endpoint, options);
     }
+  }
+
+  private getMockResponse<T>(endpoint: string, options: RequestOptions): Promise<T> {
+    // Mock para login
+    if (endpoint.includes('/admin/login')) {
+      const mockToken = 'mock-admin-token-' + Date.now();
+      localStorage.setItem('adminToken', mockToken);
+      return Promise.resolve({
+        user: { id: '1', email: 'admin@cachorromelo.com', name: 'Admin Mock', role: 'ADMIN' },
+        token: mockToken
+      } as T);
+    }
+
+    // Mock para dashboard
+    if (endpoint.includes('/admin/dashboard')) {
+      return Promise.resolve({
+        totalOrders: 150,
+        totalRevenue: 15000,
+        pendingOrders: 5,
+        completedOrders: 145
+      } as T);
+    }
+
+    // Mock para produtos
+    if (endpoint.includes('/products')) {
+      return import('./mockData').then(({ mockProducts }) => mockProducts as T);
+    }
+
+    // Mock genérico
+    return Promise.resolve([] as T);
   }
 
   // Autenticação

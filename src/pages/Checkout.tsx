@@ -111,8 +111,8 @@ export default function Checkout() {
       // Limpar carrinho local
       mockStore.clearCart();
       
-      // Navigate to order tracking (sem toast irritante)
-      navigate(`/pedido/${order.id}`);
+      // Navigate to meus pedidos com o ID do pedido
+      navigate(`/meus-pedidos?orderId=${order.id}`);
     } catch (error) {
       console.error('❌ Erro ao criar pedido:', error);
       toast({

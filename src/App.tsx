@@ -20,6 +20,14 @@ import AdminKitchen from "./pages/AdminKitchen";
 import AdminUsers from "./pages/AdminUsers";
 import AdminReports from "./pages/AdminReports";
 
+// Deliverer pages
+import DelivererLogin from "./pages/DelivererLogin";
+import DelivererDashboard from "./pages/DelivererDashboard";
+import DeliveringPage from "./pages/DeliveringPage";
+
+// Customer pages
+import MeusPedidos from "./pages/MeusPedidos";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -35,6 +43,7 @@ const App = () => (
           <Route path="/produto/:id" element={<ProductDetail />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/pedido/:id" element={<OrderTracking />} />
+          <Route path="/meus-pedidos" element={<MeusPedidos />} />
           
           {/* Rotas admin */}
           <Route path="/admin" element={<AdminLogin />} />
@@ -47,6 +56,11 @@ const App = () => (
           <Route path="/admin/cozinha" element={<AdminKitchen />} />
           <Route path="/admin/usuarios" element={<AdminUsers />} />
           <Route path="/admin/relatorios" element={<AdminReports />} />
+          
+          {/* Rotas motoboy/entregador */}
+          <Route path="/deliverer/login" element={<DelivererLogin />} />
+          <Route path="/motoboy" element={<DelivererDashboard />} />
+          <Route path="/entregando" element={<DeliveringPage />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

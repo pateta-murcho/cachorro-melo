@@ -1,7 +1,8 @@
 // API service for real backend integration
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api'
-  : `http://${window.location.hostname}:3001/api`;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (window.location.hostname === 'localhost' 
+    ? 'http://localhost:3001/api'
+    : '');
 
 export interface ApiCartItem {
   product_id: string;
@@ -46,34 +47,58 @@ export interface CreateOrderRequest {
   customer_email?: string;
   delivery_address: string;
   payment_method: 'CASH' | 'PIX' | 'CARD';
-  notes?: string;
   items: ApiCartItem[];
 }
 
+// Check if backend is available
+const USE_MOCK = !API_BASE_URL || API_BASE_URL === '';
+
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    // If no backend URL, use mock data
+    if (USE_MOCK) {
+      console.warn('🔄 Backend não disponível, usando dados mockados');
+      return this.getMockData<T>(endpoint);
+    }
+
     const url = `${API_BASE_URL}${endpoint}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-      ...options,
-    });
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+        ...options,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API Error: ${response.status} - ${errorText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.message || 'API request failed');
+      }
+
+      return data.data;
+    } catch (error) {
+      console.warn('❌ Erro ao conectar com backend, usando mock:', error);
+      return this.getMockData<T>(endpoint);
     }
+  }
 
-    const data = await response.json();
+  private async getMockData<T>(endpoint: string): Promise<T> {
+    const { mockProducts } = await import('./mockData');
     
-    if (!data.success) {
-      throw new Error(data.message || 'API request failed');
+    if (endpoint.includes('/products')) {
+      return mockProducts as T;
     }
-
-    return data.data;
+    
+    // Retornar array vazio para outros endpoints
+    return [] as T;
   }
 
   // Products

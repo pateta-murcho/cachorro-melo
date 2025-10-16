@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Teste Debug - Sistema Motoboy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #fef3c7 0%, #fca5a5 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #dc2626;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .section h2 {
+            color: #ea580c;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        button {
+            background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+        }
+        button:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .log {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+            white-space: pre-wrap;
+        }
+        .error { color: #ef4444; }
+        .success { color: #10b981; }
+        .warning { color: #f59e0b; }
+        .info { color: #3b82f6; }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status.ok { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.pending { background: #fef3c7; color: #92400e; }
+        input {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 200px;
+            margin-right: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f97316;
+        }
+        .card h3 {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .card p {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Debug - Sistema de Entregas Motoboy</h1>
+
+        <!-- VERIFICAÇÃO INICIAL -->
+        <div class="section">
+            <h2>1️⃣ Verificação do Sistema</h2>
+            <button onclick="checkSystem()">🔍 Verificar Sistema</button>
+            <button onclick="clearLogs()">🗑️ Limpar Logs</button>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>Backend</h3>
+                    <p id="backend-status">⏳ Aguardando...</p>
+                </div>
+                <div class="card">
+                    <h3>Autenticação</h3>
+                    <p id="auth-status">⏳ Aguardando...</p>
+                </div>
+                <div class="card">
+                    <h3>Token</h3>
+                    <p id="token-status">⏳ Aguardando...</p>
+                </div>
+            </div>
+            
+            <div id="system-log" class="log"></div>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="section">
+            <h2>2️⃣ Login do Motoboy</h2>
+            <input type="text" id="phone" value="11988776655" placeholder="Telefone">
+            <input type="password" id="password" value="motoboy123" placeholder="Senha">
+            <button onclick="doLogin()">🔐 Fazer Login</button>
+            <button onclick="doLogout()">🚪 Logout</button>
+            <div id="login-log" class="log"></div>
+        </div>
+
+        <!-- PEDIDOS DISPONÍVEIS -->
+        <div class="section">
+            <h2>3️⃣ Pedidos Disponíveis</h2>
+            <button onclick="getAvailableOrders()">📦 Buscar Pedidos</button>
+            <div id="orders-log" class="log"></div>
+        </div>
+
+        <!-- INICIAR ENTREGA -->
+        <div class="section">
+            <h2>4️⃣ Iniciar Entrega</h2>
+            <input type="text" id="order-ids" placeholder="IDs dos pedidos (separados por vírgula)">
+            <button onclick="startDelivery()">🚀 Iniciar Entrega</button>
+            <div id="start-log" class="log"></div>
+        </div>
+
+        <!-- MINHAS ENTREGAS -->
+        <div class="section">
+            <h2>5️⃣ Minhas Entregas (em andamento)</h2>
+            <button onclick="getMyDeliveries()">🚚 Buscar Minhas Entregas</button>
+            <div id="deliveries-log" class="log"></div>
+        </div>
+
+        <!-- CONFIRMAR ENTREGA -->
+        <div class="section">
+            <h2>6️⃣ Confirmar Entrega</h2>
+            <input type="text" id="confirm-order-id" placeholder="ID do pedido">
+            <input type="text" id="delivery-code" placeholder="Código OTP (3 dígitos)" maxlength="3">
+            <button onclick="confirmDelivery()">✅ Confirmar Entrega</button>
+            <div id="confirm-log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let authToken = null;
+        let delivererData = null;
+
+        function log(elementId, message, type = 'info') {
+            const el = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            const emoji = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️'
+            }[type] || 'ℹ️';
+            
+            el.innerHTML += `<span class="${type}">[${timestamp}] ${emoji} ${message}</span>\n`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function clearLogs() {
+            ['system-log', 'login-log', 'orders-log', 'start-log', 'deliveries-log', 'confirm-log'].forEach(id => {
+                document.getElementById(id).innerHTML = '';
+            });
+        }
+
+        async function checkSystem() {
+            log('system-log', 'Verificando sistema...', 'info');
+            
+            // 1. Backend Health
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    document.getElementById('backend-status').innerHTML = '✅ Online';
+                    log('system-log', `Backend OK: ${data.message}`, 'success');
+                } else {
+                    throw new Error('Backend não está OK');
+                }
+            } catch (error) {
+                document.getElementById('backend-status').innerHTML = '❌ Offline';
+                log('system-log', `Backend ERROR: ${error.message}`, 'error');
+                return;
+            }
+
+            // 2. Verificar localStorage
+            authToken = localStorage.getItem('delivererToken');
+            delivererData = localStorage.getItem('delivererData');
+
+            if (authToken) {
+                document.getElementById('auth-status').innerHTML = '✅ Logado';
+                document.getElementById('token-status').innerHTML = '✅ Presente';
+                log('system-log', 'Token encontrado no localStorage', 'success');
+                
+                try {
+                    const parsed = JSON.parse(delivererData);
+                    log('system-log', `Deliverer: ${parsed.name} (ID: ${parsed.id})`, 'info');
+                } catch (e) {
+                    log('system-log', 'Erro ao parsear delivererData', 'warning');
+                }
+            } else {
+                document.getElementById('auth-status').innerHTML = '❌ Não logado';
+                document.getElementById('token-status').innerHTML = '❌ Ausente';
+                log('system-log', 'Nenhum token encontrado. Faça login primeiro!', 'warning');
+            }
+        }
+
+        async function doLogin() {
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+
+            log('login-log', `Fazendo login: ${phone}`, 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/deliverer/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+
+                const data = await response.json();
+                log('login-log', `Status: ${response.status}`, 'info');
+                log('login-log', `Resposta: ${JSON.stringify(data, null, 2)}`, 'info');
+
+                if (data.success) {
+                    authToken = data.data.token;
+                    delivererData = JSON.stringify(data.data.deliverer);
+                    
+                    localStorage.setItem('delivererToken', authToken);
+                    localStorage.setItem('delivererData', delivererData);
+                    
+                    log('login-log', `✅ Login realizado: ${data.data.deliverer.name}`, 'success');
+                    log('login-log', `Token: ${authToken}`, 'success');
+                    
+                    await checkSystem();
+                } else {
+                    log('login-log', `❌ Erro: ${data.error?.message}`, 'error');
+                }
+            } catch (error) {
+                log('login-log', `❌ Exception: ${error.message}`, 'error');
+            }
+        }
+
+        function doLogout() {
+            localStorage.removeItem('delivererToken');
+            localStorage.removeItem('delivererData');
+            authToken = null;
+            delivererData = null;
+            log('login-log', 'Logout realizado', 'info');
+            checkSystem();
+        }
+
+        async function getAvailableOrders() {
+            if (!authToken) {
+                log('orders-log', '❌ Faça login primeiro!', 'error');
+                return;
+            }
+
+            log('orders-log', 'Buscando pedidos disponíveis...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/deliverer/available-orders`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                log('orders-log', `Status: ${response.status}`, 'info');
+                log('orders-log', `Resposta: ${JSON.stringify(data, null, 2)}`, 'info');
+
+                if (data.success && data.data) {
+                    log('orders-log', `✅ ${data.data.length} pedidos encontrados`, 'success');
+                    
+                    data.data.forEach(order => {
+                        log('orders-log', `📦 #${order.id} - ${order.customer_name} - R$ ${order.total}`, 'info');
+                    });
+
+                    // Preencher campo de IDs
+                    if (data.data.length > 0) {
+                        document.getElementById('order-ids').value = data.data[0].id;
+                    }
+                } else {
+                    log('orders-log', `⚠️ ${data.error?.message || 'Nenhum pedido'}`, 'warning');
+                }
+            } catch (error) {
+                log('orders-log', `❌ Exception: ${error.message}`, 'error');
+            }
+        }
+
+        async function startDelivery() {
+            if (!authToken) {
+                log('start-log', '❌ Faça login primeiro!', 'error');
+                return;
+            }
+
+            const orderIdsInput = document.getElementById('order-ids').value;
+            const orderIds = orderIdsInput.split(',').map(id => id.trim()).filter(id => id);
+
+            if (orderIds.length === 0) {
+                log('start-log', '❌ Informe pelo menos um ID de pedido', 'error');
+                return;
+            }
+
+            log('start-log', `Iniciando entrega: ${orderIds.join(', ')}`, 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/deliverer/start-delivery`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ orderIds })
+                });
+
+                const data = await response.json();
+                log('start-log', `Status: ${response.status}`, 'info');
+                log('start-log', `Resposta: ${JSON.stringify(data, null, 2)}`, 'info');
+
+                if (data.success) {
+                    log('start-log', '✅ Entrega iniciada com sucesso!', 'success');
+                    log('start-log', 'Aguarde 2 segundos e busque "Minhas Entregas"', 'info');
+                    
+                    // Preencher campo de confirmação com primeiro pedido
+                    document.getElementById('confirm-order-id').value = orderIds[0];
+                } else {
+                    log('start-log', `❌ Erro: ${data.error?.message}`, 'error');
+                }
+            } catch (error) {
+                log('start-log', `❌ Exception: ${error.message}`, 'error');
+            }
+        }
+
+        async function getMyDeliveries() {
+            if (!authToken) {
+                log('deliveries-log', '❌ Faça login primeiro!', 'error');
+                return;
+            }
+
+            log('deliveries-log', 'Buscando minhas entregas...', 'info');
+            log('deliveries-log', `Token: ${authToken}`, 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/deliverer/my-deliveries`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                log('deliveries-log', `Status: ${response.status}`, 'info');
+                log('deliveries-log', `Resposta: ${JSON.stringify(data, null, 2)}`, 'info');
+
+                if (data.success && data.data) {
+                    if (data.data.length === 0) {
+                        log('deliveries-log', '⚠️ Nenhuma entrega em andamento', 'warning');
+                        log('deliveries-log', '💡 Inicie uma entrega primeiro!', 'info');
+                    } else {
+                        log('deliveries-log', `✅ ${data.data.length} entregas em andamento`, 'success');
+                        
+                        data.data.forEach(delivery => {
+                            log('deliveries-log', `🚚 #${delivery.id} - ${delivery.customer_name}`, 'info');
+                            log('deliveries-log', `   Endereço: ${delivery.delivery_address}`, 'info');
+                            log('deliveries-log', `   Código OTP: ${delivery.delivery_code}`, 'warning');
+                            log('deliveries-log', `   Total: R$ ${delivery.total}`, 'info');
+                            log('deliveries-log', '---', 'info');
+                        });
+                    }
+                } else {
+                    log('deliveries-log', `❌ Erro: ${data.error?.message}`, 'error');
+                }
+            } catch (error) {
+                log('deliveries-log', `❌ Exception: ${error.message}`, 'error');
+                log('deliveries-log', `Stack: ${error.stack}`, 'error');
+            }
+        }
+
+        async function confirmDelivery() {
+            if (!authToken) {
+                log('confirm-log', '❌ Faça login primeiro!', 'error');
+                return;
+            }
+
+            const orderId = document.getElementById('confirm-order-id').value;
+            const deliveryCode = document.getElementById('delivery-code').value;
+
+            if (!orderId || !deliveryCode) {
+                log('confirm-log', '❌ Informe o ID do pedido e o código OTP', 'error');
+                return;
+            }
+
+            log('confirm-log', `Confirmando entrega #${orderId} com código ${deliveryCode}`, 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/deliverer/confirm-delivery`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ orderId, deliveryCode })
+                });
+
+                const data = await response.json();
+                log('confirm-log', `Status: ${response.status}`, 'info');
+                log('confirm-log', `Resposta: ${JSON.stringify(data, null, 2)}`, 'info');
+
+                if (data.success) {
+                    log('confirm-log', '✅ Entrega confirmada com sucesso!', 'success');
+                } else {
+                    log('confirm-log', `❌ Erro: ${data.error?.message}`, 'error');
+                }
+            } catch (error) {
+                log('confirm-log', `❌ Exception: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            checkSystem();
+        });
+    </script>
+</body>
+</html>
