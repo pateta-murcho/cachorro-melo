@@ -41,6 +41,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// ROTAS IMPORTADAS
+const delivererRoutes = require('./routes/deliverer');
+app.use('/api/deliverer', delivererRoutes);
+
 // HEALTH CHECK
 app.get('/health', (req, res) => {
   console.log('✅ Health check OK');
@@ -351,12 +355,16 @@ app.post('/api/orders', async (req, res) => {
     }
 
     // PASSO 4: CRIAR PEDIDO COM customer_id
+    // Gerar código OTP de 3 dígitos para entrega
+    const deliveryCode = Math.floor(100 + Math.random() * 900).toString();
+    
     const orderData = {
       customer_id: customerId, // ✅ VINCULANDO AO CLIENTE!
       total: finalTotal,
       status: 'PENDING',
       payment_method: finalPaymentMethod,
       delivery_address: address,
+      delivery_code: deliveryCode, // ✅ CÓDIGO OTP PARA ENTREGA
       observations: notes || null,
       created_at: new Date().toISOString()
     };
@@ -413,6 +421,134 @@ app.post('/api/orders', async (req, res) => {
       success: false,
       error: { 
         message: 'Erro ao criar pedido',
+        details: error.message 
+      }
+    });
+  }
+});
+
+// PEDIDOS - BUSCAR POR ID
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    console.log('📋 Buscando pedido:', req.params.id);
+    
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          id,
+          quantity,
+          price,
+          observations,
+          products (
+            id,
+            name,
+            image_url
+          )
+        )
+      `)
+      .eq('id', req.params.id)
+      .single();
+
+    if (error) {
+      console.error('❌ Erro Supabase:', error);
+      throw error;
+    }
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Pedido não encontrado' }
+      });
+    }
+
+    // Formatar itens
+    const formattedOrder = {
+      ...order,
+      items: order.order_items?.map(item => ({
+        id: item.id,
+        product_name: item.products?.name,
+        product_image: item.products?.image_url,
+        quantity: item.quantity,
+        price: item.price,
+        observations: item.observations
+      })) || []
+    };
+
+    console.log('✅ Pedido encontrado');
+    
+    res.json({
+      success: true,
+      data: formattedOrder
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar pedido:', error);
+    res.status(500).json({
+      success: false,
+      error: { 
+        message: 'Erro ao buscar pedido',
+        details: error.message 
+      }
+    });
+  }
+});
+
+// PEDIDOS - LISTAR RECENTES DO CLIENTE
+app.get('/api/orders/customer/recent', async (req, res) => {
+  try {
+    console.log('📋 Buscando pedidos recentes...');
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          id,
+          quantity,
+          price,
+          observations,
+          products (
+            id,
+            name,
+            image_url
+          )
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error('❌ Erro Supabase:', error);
+      throw error;
+    }
+
+    // Formatar pedidos
+    const formattedOrders = data?.map(order => ({
+      ...order,
+      items: order.order_items?.map(item => ({
+        id: item.id,
+        product_name: item.products?.name,
+        product_image: item.products?.image_url,
+        quantity: item.quantity,
+        price: item.price,
+        observations: item.observations
+      })) || []
+    })) || [];
+
+    console.log(`✅ ${formattedOrders.length} pedidos recentes encontrados`);
+    
+    res.json({
+      success: true,
+      data: formattedOrders,
+      count: formattedOrders.length
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar pedidos:', error);
+    res.status(500).json({
+      success: false,
+      error: { 
+        message: 'Erro ao buscar pedidos',
         details: error.message 
       }
     });
@@ -791,6 +927,7 @@ app.listen(PORT, () => {
   console.log(`🛒 Pedidos: http://localhost:${PORT}/api/orders`);
   console.log(`👤 Admin: http://localhost:${PORT}/api/auth/login`);
   console.log(`📊 Dashboard: http://localhost:${PORT}/api/admin/dashboard`);
+  console.log(`🏍️ Motoboy: http://localhost:${PORT}/api/deliverer/login`);
   console.log('🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥\n');
 });
 
