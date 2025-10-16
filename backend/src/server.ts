@@ -29,6 +29,8 @@ const io = new Server(server, {
       "http://localhost:5173",
       "http://localhost:8080", 
       "http://localhost:8081",
+      "http://192.168.15.7:8080",
+      "http://192.168.15.7:5173",
       ...(process.env.CORS_ORIGIN ? [process.env.CORS_ORIGIN] : [])
     ],
     methods: ["GET", "POST"]
@@ -54,6 +56,8 @@ app.use(cors({
     "http://localhost:5173",
     "http://localhost:8080", 
     "http://localhost:8081",
+    "http://192.168.15.7:8080",
+    "http://192.168.15.7:5173",
     ...(process.env.CORS_ORIGIN ? [process.env.CORS_ORIGIN] : [])
   ],
   credentials: true
@@ -232,8 +236,12 @@ app.use('/api/auth', authRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-server.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+const portNumber = typeof PORT === 'string' ? parseInt(PORT) : PORT;
+
+server.listen(portNumber, '0.0.0.0', () => {
+  console.log(`🚀 Servidor rodando na porta ${portNumber}`);
   console.log(`📱 CORS habilitado para: ${process.env.CORS_ORIGIN}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔗 Health check local: http://localhost:${portNumber}/health`);
+  console.log(`🔗 Health check rede: http://192.168.15.7:${portNumber}/health`);
+  console.log(`✅ Servidor acessível em TODAS as interfaces de rede (0.0.0.0)`);
 });

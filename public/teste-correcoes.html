@@ -232,9 +232,9 @@
                 
                 const data = await response.json();
                 
-                if (response.ok && data.success) {
-                    log(`✅ Login OK: ${data.admin.name} (${data.admin.email})`, 'success');
-                    addResult('login-results', `✅ ${email}: Login realizado com sucesso! Admin: ${data.admin.name}`, 'success');
+                if (response.ok && data.success && data.data && data.data.admin) {
+                    log(`✅ Login OK: ${data.data.admin.name} (${data.data.admin.email})`, 'success');
+                    addResult('login-results', `✅ ${email}: Login realizado com sucesso! Admin: ${data.data.admin.name}`, 'success');
                 } else {
                     log(`❌ Login falhou: ${data.error?.message || 'Erro desconhecido'}`, 'error');
                     addResult('login-results', `❌ ${email}: ${data.error?.message || 'Falha no login'}`, 'error');

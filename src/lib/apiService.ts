@@ -1,5 +1,7 @@
 // API service for real backend integration
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3001/api'
+  : `http://${window.location.hostname}:3001/api`;
 
 export interface ApiCartItem {
   product_id: string;
@@ -90,14 +92,11 @@ class ApiService {
 
   // Orders
   async createOrder(orderData: CreateOrderRequest): Promise<ApiOrder> {
-    console.log('🚀 Enviando pedido para API:', orderData);
-    
     const order = await this.request<ApiOrder>('/orders', {
       method: 'POST',
       body: JSON.stringify(orderData),
     });
 
-    console.log('✅ Pedido criado na API:', order);
     return order;
   }
 

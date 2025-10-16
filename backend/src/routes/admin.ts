@@ -27,14 +27,14 @@ router.get('/dashboard', authenticateToken, async (req: any, res: any, next: any
     // Receita hoje
     const { data: todayRevenue, error: revenueError } = await supabase
       .from('orders')
-      .select('total_amount')
+      .select('total')
       .gte('created_at', todayISO)
       .lt('created_at', tomorrowISO)
       .neq('status', 'CANCELLED');
 
     if (revenueError) throw revenueError;
 
-    const todayRevenueSum = todayRevenue?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
+    const todayRevenueSum = todayRevenue?.reduce((sum, order) => sum + parseFloat(order.total || 0), 0) || 0;
 
     // Pedidos pendentes
     const { count: pendingOrders, error: pendingError } = await supabase
@@ -101,10 +101,18 @@ router.get('/dashboard', authenticateToken, async (req: any, res: any, next: any
 
     if (recentOrdersError) throw recentOrdersError;
 
+    // Total de pedidos (todos)
+    const { count: totalOrders, error: totalOrdersError } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true });
+
+    if (totalOrdersError) throw totalOrdersError;
+
     res.json({
       success: true,
       data: {
         stats: {
+          totalOrders: totalOrders || 0,
           todayOrders: todayOrders || 0,
           todayRevenue: todayRevenueSum,
           pendingOrders: pendingOrders || 0,

@@ -93,10 +93,10 @@ async function testeLoginAdmin() {
         
         const data = await response.json();
         
-        if (response.ok && data.success && data.admin) {
-            adminToken = data.token;
-            addResult('Login Admin', '✅', `Login OK: ${data.admin.name}`);
-            return data.admin;
+        if (response.ok && data.success && data.data && data.data.admin) {
+            adminToken = data.data.token;
+            addResult('Login Admin', '✅', `Login OK: ${data.data.admin.name}`);
+            return data.data.admin;
         } else {
             addResult('Login Admin', '❌', data.error?.message || 'Falha no login');
             return null;

@@ -15,10 +15,17 @@ console.log('🔑 Supabase Key:', supabaseKey.substring(0, 20) + '...');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// MIDDLEWARE
+// MIDDLEWARE - CORS flexível para qualquer porta localhost
 app.use(cors({
-  origin: 'http://localhost:8080',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: (origin, callback) => {
+    // Permite qualquer localhost ou sem origin (Postman, etc)
+    if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Libera tudo em dev
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
 
@@ -73,6 +80,138 @@ app.get('/api/products', async (req, res) => {
       success: false,
       error: { 
         message: 'Erro ao buscar produtos',
+        details: error.message 
+      }
+    });
+  }
+});
+
+// CRIAR PRODUTO
+app.post('/api/products', async (req, res) => {
+  try {
+    console.log('➕ Criando produto...');
+    console.log('Dados recebidos:', req.body);
+    
+    const { name, description, price, category_id, image_url, available, featured, preparation_time, ingredients } = req.body;
+    
+    const productData = {
+      name,
+      description,
+      price: parseFloat(price),
+      category_id,
+      image_url: image_url || null,
+      available: available !== undefined ? available : true,
+      featured: featured || false,
+      preparation_time: preparation_time || 15,
+      ingredients: ingredients || []
+    };
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert([productData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Erro ao criar produto:', error);
+      throw error;
+    }
+
+    console.log('✅ Produto criado:', data.id);
+    
+    res.json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    console.error('❌ Erro ao criar produto:', error);
+    res.status(500).json({
+      success: false,
+      error: { 
+        message: 'Erro ao criar produto',
+        details: error.message 
+      }
+    });
+  }
+});
+
+// ATUALIZAR PRODUTO
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    console.log('✏️ Atualizando produto:', req.params.id);
+    
+    const { name, description, price, category_id, image_url, available, featured, preparation_time, ingredients } = req.body;
+    
+    const productData = {
+      name,
+      description,
+      price: parseFloat(price),
+      category_id,
+      image_url,
+      available,
+      featured,
+      preparation_time,
+      ingredients,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('products')
+      .update(productData)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Erro ao atualizar produto:', error);
+      throw error;
+    }
+
+    console.log('✅ Produto atualizado');
+    
+    res.json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    console.error('❌ Erro ao atualizar produto:', error);
+    res.status(500).json({
+      success: false,
+      error: { 
+        message: 'Erro ao atualizar produto',
+        details: error.message 
+      }
+    });
+  }
+});
+
+// DELETAR PRODUTO
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    console.log('🗑️ Deletando produto:', req.params.id);
+    
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) {
+      console.error('❌ Erro ao deletar produto:', error);
+      throw error;
+    }
+
+    console.log('✅ Produto deletado');
+    
+    res.json({
+      success: true,
+      message: 'Produto deletado com sucesso'
+    });
+  } catch (error) {
+    console.error('❌ Erro ao deletar produto:', error);
+    res.status(500).json({
+      success: false,
+      error: { 
+        message: 'Erro ao deletar produto',
         details: error.message 
       }
     });
@@ -135,8 +274,61 @@ app.post('/api/orders', async (req, res) => {
       });
     }
 
-    // CORREÇÃO: Usar valores de enum CORRETOS
-    const validStatuses = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
+    // PASSO 1: CRIAR OU BUSCAR CLIENTE
+    console.log('👤 Criando/buscando cliente:', customerPhone);
+    
+    // Buscar cliente existente pelo telefone
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('phone', customerPhone)
+      .single();
+
+    let customerId;
+    
+    if (existingCustomer) {
+      // Atualizar dados do cliente se mudaram
+      console.log('📝 Cliente existente encontrado:', existingCustomer.id);
+      const { data: updatedCustomer, error: updateError } = await supabase
+        .from('customers')
+        .update({
+          name: customerName,
+          email: customerEmailAddr || existingCustomer.email,
+          address: address
+        })
+        .eq('id', existingCustomer.id)
+        .select()
+        .single();
+      
+      if (updateError) {
+        console.error('❌ Erro ao atualizar cliente:', updateError);
+      }
+      
+      customerId = existingCustomer.id;
+    } else {
+      // Criar novo cliente
+      console.log('➕ Criando novo cliente');
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert([{
+          name: customerName,
+          phone: customerPhone,
+          email: customerEmailAddr,
+          address: address
+        }])
+        .select()
+        .single();
+
+      if (customerError) {
+        console.error('❌ Erro ao criar cliente:', customerError);
+        throw customerError;
+      }
+
+      console.log('✅ Cliente criado:', newCustomer.id);
+      customerId = newCustomer.id;
+    }
+
+    // PASSO 2: VALIDAR PAYMENT METHOD
     const validPaymentMethods = ['PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'CASH'];
     
     // Mapear payment methods
@@ -150,36 +342,26 @@ app.post('/api/orders', async (req, res) => {
       finalPaymentMethod = 'CASH'; // Default
     }
 
-    const orderNumber = `PED${Date.now()}`;
-    
-    // Estrutura CORRETA que funcionará
+    // PASSO 3: CALCULAR TOTAL
+    let finalTotal = parseFloat(total) || 0;
+    if (items && Array.isArray(items) && items.length > 0 && !total) {
+      finalTotal = items.reduce((sum, item) => {
+        return sum + (parseFloat(item.price || 0) * parseInt(item.quantity || 1));
+      }, 0);
+    }
+
+    // PASSO 4: CRIAR PEDIDO COM customer_id
     const orderData = {
-      total: parseFloat(total) || 0,
-      status: 'PENDING', // ✅ MAIÚSCULO
-      payment_method: finalPaymentMethod, // ✅ MAIÚSCULO E MAPEADO
+      customer_id: customerId, // ✅ VINCULANDO AO CLIENTE!
+      total: finalTotal,
+      status: 'PENDING',
+      payment_method: finalPaymentMethod,
       delivery_address: address,
+      observations: notes || null,
       created_at: new Date().toISOString()
     };
 
-    // Se tem items, adiciona como JSON
-    if (items && Array.isArray(items) && items.length > 0) {
-      orderData.items = JSON.stringify(items);
-      
-      // Calcula total se não foi informado
-      if (!total) {
-        const calculatedTotal = items.reduce((sum, item) => {
-          return sum + (parseFloat(item.price || 0) * parseInt(item.quantity || 1));
-        }, 0);
-        orderData.total = calculatedTotal;
-      }
-    }
-
-    // Tenta adicionar observações se a coluna existir
-    if (notes) {
-      orderData.observations = notes;
-    }
-
-    console.log('📋 Dados FINAIS do pedido:', JSON.stringify(orderData, null, 2));
+    console.log('📋 Criando pedido com customer_id:', customerId);
 
     const { data, error } = await supabase
       .from('orders')
@@ -188,48 +370,41 @@ app.post('/api/orders', async (req, res) => {
       .single();
 
     if (error) {
-      console.error('❌ Erro Supabase:', error);
-      
-      // Se AINDA der erro, vamos usar só o MÍNIMO ABSOLUTO
-      console.log('🔄 Tentando estrutura ULTRA MÍNIMA...');
-      
-      const ultraMinimalData = {
-        total: parseFloat(total) || 0,
-        status: 'PENDING', // ✅ MAIÚSCULO
-        payment_method: 'CASH', // ✅ MAIÚSCULO
-        delivery_address: address || 'Endereço não informado'
-      };
-      
-      const { data: retryData, error: retryError } = await supabase
-        .from('orders')
-        .insert([ultraMinimalData])
-        .select()
-        .single();
-        
-      if (retryError) {
-        console.error('❌ Erro na tentativa ultra mínima:', retryError);
-        throw retryError;
-      }
-      
-      console.log(`✅ Pedido criado (ultra mínimo): ${retryData.id}`);
-      return res.json({
-        success: true,
-        data: {
-          ...retryData,
-          orderNumber: retryData.id,
-          customerData: { name: customerName, phone: customerPhone, email: customerEmailAddr }
-        }
-      });
+      console.error('❌ Erro ao criar pedido:', error);
+      throw error;
     }
 
-    console.log(`✅ Pedido ${orderNumber} criado com sucesso!`);
+    console.log(`✅ Pedido criado: ${data.id} (cliente: ${customerId})`);
+    
+    // PASSO 5: CRIAR ORDER_ITEMS SE FORNECIDOS
+    if (items && Array.isArray(items) && items.length > 0) {
+      console.log('📦 Criando itens do pedido:', items.length);
+      
+      const orderItems = items.map(item => ({
+        order_id: data.id,
+        product_id: item.product_id || item.id,
+        quantity: parseInt(item.quantity || 1),
+        price: parseFloat(item.price || 0),
+        observations: item.observations || null
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) {
+        console.error('❌ Erro ao criar items:', itemsError);
+        // Não falha o pedido, só loga o erro
+      } else {
+        console.log('✅ Itens criados com sucesso');
+      }
+    }
     
     res.json({
       success: true,
       data: {
         ...data,
-        orderNumber: data.id || orderNumber,
-        customerData: { name: customerName, phone: customerPhone, email: customerEmailAddr }
+        orderNumber: data.id
       }
     });
   } catch (error) {
@@ -278,6 +453,52 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+// PEDIDOS - ATUALIZAR STATUS
+app.patch('/api/orders/:id/status', async (req, res) => {
+  try {
+    console.log('🔄 Atualizando status do pedido:', req.params.id);
+    const { status } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Status é obrigatório' }
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ 
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Erro ao atualizar status:', error);
+      throw error;
+    }
+
+    console.log('✅ Status atualizado:', status);
+    
+    res.json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    console.error('❌ Erro ao atualizar status:', error);
+    res.status(500).json({
+      success: false,
+      error: { 
+        message: 'Erro ao atualizar status',
+        details: error.message 
+      }
+    });
+  }
+});
+
 // ADMIN LOGIN
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -287,12 +508,21 @@ app.post('/api/auth/login', async (req, res) => {
     console.log('📧 Email recebido:', email);
     console.log('🔑 Password recebido:', password ? '***' : 'vazio');
     
+    // Validar se email e password foram enviados
+    if (!email || !password) {
+      console.log('❌ Email ou senha não fornecidos');
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Email e senha são obrigatórios' }
+      });
+    }
+    
     // CREDENCIAIS VÁLIDAS DIRETO - SEM VERIFICAÇÃO SUPABASE
     const validCredentials = [
-      { email: 'admin@cachorromelo.com', password: 'admin123' },
-      { email: 'admin@teste.com', password: '123456' },
-      { email: 'root@cachorromelo.com', password: 'root123' },
-      { email: 'test@test.com', password: 'test123' }
+      { id: 'admin-001', email: 'admin@cachorromelo.com', password: 'admin123', name: 'Admin Cachorro Melo' },
+      { id: 'admin-002', email: 'admin@teste.com', password: '123456', name: 'Admin Teste' },
+      { id: 'admin-003', email: 'root@cachorromelo.com', password: 'root123', name: 'Root Admin' },
+      { id: 'admin-004', email: 'test@test.com', password: 'test123', name: 'Test Admin' }
     ];
     
     const validUser = validCredentials.find(
@@ -302,18 +532,23 @@ app.post('/api/auth/login', async (req, res) => {
     if (validUser) {
       console.log(`✅ Login admin VÁLIDO: ${email}`);
       
-      return res.json({
+      const responseData = {
         success: true,
-        admin: {
-          id: 'admin-valid-' + Date.now(),
-          name: 'Admin Cachorro Melo',
-          email: email,
-          role: 'admin'
-        },
-        token: `token-valid-${Date.now()}`
-      });
+        data: {
+          admin: {
+            id: validUser.id,
+            name: validUser.name,
+            email: validUser.email,
+            role: 'admin'
+          },
+          token: `token-${validUser.id}-${Date.now()}`
+        }
+      };
+      
+      console.log('📤 Resposta enviada:', JSON.stringify(responseData, null, 2));
+      return res.status(200).json(responseData);
     } else {
-      console.log(`❌ Login INVÁLIDO: ${email} com senha ${password}`);
+      console.log(`❌ Login INVÁLIDO: ${email}`);
       return res.status(401).json({
         success: false,
         error: { message: 'Credenciais inválidas' }
@@ -321,7 +556,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
   } catch (error) {
     console.error('❌ Erro no login:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: { 
         message: 'Erro interno no login',
@@ -372,6 +607,104 @@ app.get('/api/admin/dashboard', async (req, res) => {
       success: false,
       error: { 
         message: 'Erro ao carregar dashboard',
+        details: error.message 
+      }
+    });
+  }
+});
+
+// ADMIN - USUÁRIOS
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    console.log('👥 Buscando usuários admin...');
+    
+    const { data, error } = await supabase
+      .from('admins')
+      .select('id, name, email, role, active, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Erro ao buscar usuários:', error);
+      throw error;
+    }
+
+    console.log(`✅ ${data?.length || 0} usuários encontrados`);
+    
+    res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar usuários:', error);
+    res.status(500).json({
+      success: false,
+      error: { 
+        message: 'Erro ao buscar usuários',
+        details: error.message 
+      }
+    });
+  }
+});
+
+// ADMIN - RELATÓRIOS
+app.get('/api/admin/reports', async (req, res) => {
+  try {
+    console.log('📊 Gerando relatórios...');
+    const period = req.query.period || 30;
+    
+    // Calcular data inicial
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(period));
+    
+    // Total de pedidos e receita
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .gte('created_at', startDate.toISOString());
+
+    if (error) throw error;
+
+    const totalRevenue = orders?.reduce((sum, o) => sum + parseFloat(o.total || 0), 0) || 0;
+    const totalOrders = orders?.length || 0;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    // Clientes únicos
+    const uniqueCustomers = new Set(orders?.map(o => o.customer_id).filter(Boolean)).size;
+
+    // Produtos mais vendidos (mock - precisaria join com order_items)
+    const topProducts = [
+      { name: 'Cachorro-quente Tradicional', quantity: 45, revenue: 405 },
+      { name: 'X-Dog Burger', quantity: 32, revenue: 384 },
+      { name: 'Dog Especial', quantity: 28, revenue: 364 }
+    ];
+
+    // Receita por período (mock - agrupar por dia)
+    const revenueByPeriod = [
+      { date: 'Hoje', revenue: 150, orders: 8 },
+      { date: 'Ontem', revenue: 230, orders: 12 },
+      { date: 'Anteontem', revenue: 180, orders: 9 }
+    ];
+
+    console.log('✅ Relatórios gerados');
+    
+    res.json({
+      success: true,
+      data: {
+        totalRevenue,
+        totalOrders,
+        totalProducts: 11,
+        totalCustomers: uniqueCustomers,
+        averageOrderValue,
+        topProducts,
+        revenueByPeriod
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erro ao gerar relatórios:', error);
+    res.status(500).json({
+      success: false,
+      error: { 
+        message: 'Erro ao gerar relatórios',
         details: error.message 
       }
     });

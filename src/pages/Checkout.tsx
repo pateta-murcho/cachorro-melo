@@ -105,22 +105,13 @@ export default function Checkout() {
         }))
       };
 
-      console.log('📦 Enviando pedido:', orderData);
-
       // Fazer requisição real para a API
       const order = await apiService.createOrder(orderData);
-      
-      console.log('✅ Pedido criado:', order);
       
       // Limpar carrinho local
       mockStore.clearCart();
       
-      toast({
-        title: "Pedido realizado!",
-        description: `Pedido #${order.id} foi criado com sucesso`,
-      });
-
-      // Navigate to order tracking
+      // Navigate to order tracking (sem toast irritante)
       navigate(`/pedido/${order.id}`);
     } catch (error) {
       console.error('❌ Erro ao criar pedido:', error);

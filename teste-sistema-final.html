@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Sistema Completo - Cachorromelo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        .test-section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-ok { background: #28a745; color: white; }
+        .status-error { background: #dc3545; color: white; }
+        .status-pending { background: #ffc107; color: #333; }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-width: 150px;
+            margin: 10px;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Teste Sistema Completo</h1>
+        <p class="subtitle">Cachorromelo Delivery - Verificação de Todas as Rotas e Funcionalidades</p>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total">0</div>
+                <div class="stat-label">Testes Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-success">0</div>
+                <div class="stat-label">✅ Sucesso</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-error">0</div>
+                <div class="stat-label">❌ Falhas</div>
+            </div>
+        </div>
+
+        <!-- TESTE 1: LOGIN ADMIN -->
+        <div class="test-section">
+            <h2>🔐 1. Login Admin</h2>
+            <div class="grid-2">
+                <button onclick="testLogin()">Testar Login (admin@cachorromelo.com)</button>
+                <button onclick="testLoginInvalido()">Testar Login Inválido</button>
+            </div>
+            <div id="result-login" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- TESTE 2: PRODUTOS -->
+        <div class="test-section">
+            <h2>📦 2. Produtos (CRUD)</h2>
+            <div class="grid-2">
+                <button onclick="testGetProducts()">Listar Produtos</button>
+                <button onclick="testCreateProduct()">Criar Produto</button>
+                <button onclick="testUpdateProduct()">Atualizar Produto</button>
+                <button onclick="testDeleteProduct()">Deletar Produto</button>
+            </div>
+            <div id="result-products" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- TESTE 3: PEDIDOS -->
+        <div class="test-section">
+            <h2>🛒 3. Pedidos (CRUD)</h2>
+            <div class="grid-2">
+                <button onclick="testGetOrders()">Listar Pedidos</button>
+                <button onclick="testCreateOrder()">Criar Pedido</button>
+                <button onclick="testUpdateOrderStatus()">Atualizar Status</button>
+            </div>
+            <div id="result-orders" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- TESTE 4: ADMIN DASHBOARD -->
+        <div class="test-section">
+            <h2>📊 4. Admin Dashboard</h2>
+            <button onclick="testDashboard()">Carregar Dashboard</button>
+            <div id="result-dashboard" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- TESTE 5: ADMIN USERS -->
+        <div class="test-section">
+            <h2>👥 5. Admin Usuários</h2>
+            <button onclick="testAdminUsers()">Listar Usuários Admin</button>
+            <div id="result-users" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- TESTE 6: ADMIN REPORTS -->
+        <div class="test-section">
+            <h2>📈 6. Admin Relatórios</h2>
+            <div class="grid-2">
+                <button onclick="testReports('today')">Relatório Hoje</button>
+                <button onclick="testReports('week')">Relatório Semana</button>
+                <button onclick="testReports('month')">Relatório Mês</button>
+            </div>
+            <div id="result-reports" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- TESTE 7: CATEGORIAS -->
+        <div class="test-section">
+            <h2>🏷️ 7. Categorias</h2>
+            <button onclick="testCategories()">Listar Categorias</button>
+            <div id="result-categories" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- TESTE COMPLETO -->
+        <div class="test-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+            <h2 style="color: white;">🚀 TESTE COMPLETO</h2>
+            <button onclick="runAllTests()" style="background: white; color: #667eea; font-size: 16px; padding: 15px 30px;">
+                Executar TODOS os Testes
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+        let testStats = { total: 0, success: 0, error: 0 };
+        let authToken = null;
+        let createdProductId = null;
+        let createdOrderId = null;
+
+        function updateStats() {
+            document.getElementById('stat-total').textContent = testStats.total;
+            document.getElementById('stat-success').textContent = testStats.success;
+            document.getElementById('stat-error').textContent = testStats.error;
+        }
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = message;
+            element.style.display = 'block';
+            
+            testStats.total++;
+            if (type === 'success') testStats.success++;
+            if (type === 'error') testStats.error++;
+            updateStats();
+        }
+
+        // TESTE 1: LOGIN
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@cachorromelo.com',
+                        password: 'admin123'
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.token) {
+                    authToken = data.data.token;
+                    showResult('result-login', `✅ LOGIN SUCESSO!\n\nToken: ${authToken}\nAdmin: ${JSON.stringify(data.data.admin, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-login', `❌ ERRO NO LOGIN:\n${error.message}`, 'error');
+            }
+        }
+
+        async function testLoginInvalido() {
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'invalido@teste.com',
+                        password: 'senhaerrada'
+                    })
+                });
+                const data = await response.json();
+                
+                if (!data.success && response.status === 401) {
+                    showResult('result-login', `✅ VALIDAÇÃO CORRETA!\nLogin inválido bloqueado como esperado.\n\nResposta: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    throw new Error('Login inválido não foi bloqueado!');
+                }
+            } catch (error) {
+                showResult('result-login', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        // TESTE 2: PRODUTOS
+        async function testGetProducts() {
+            try {
+                const response = await fetch(`${API_URL}/products`);
+                const data = await response.json();
+                
+                if (data.success && Array.isArray(data.data)) {
+                    showResult('result-products', `✅ ${data.data.length} PRODUTOS ENCONTRADOS!\n\nPrimeiros 3:\n${JSON.stringify(data.data.slice(0, 3), null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-products', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        async function testCreateProduct() {
+            try {
+                const newProduct = {
+                    name: `Produto Teste ${Date.now()}`,
+                    description: 'Produto criado automaticamente pelo teste',
+                    price: 29.90,
+                    category_id: '1', // Categoria padrão
+                    image_url: 'https://via.placeholder.com/300',
+                    available: true
+                };
+
+                const response = await fetch(`${API_URL}/products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newProduct)
+                });
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    createdProductId = data.data.id;
+                    showResult('result-products', `✅ PRODUTO CRIADO!\n\nID: ${createdProductId}\n\nDados:\n${JSON.stringify(data.data, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-products', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        async function testUpdateProduct() {
+            if (!createdProductId) {
+                showResult('result-products', '⚠️ Execute "Criar Produto" primeiro!', 'error');
+                return;
+            }
+
+            try {
+                const updatedData = {
+                    name: `Produto Atualizado ${Date.now()}`,
+                    price: 39.90
+                };
+
+                const response = await fetch(`${API_URL}/products/${createdProductId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('result-products', `✅ PRODUTO ATUALIZADO!\n\nID: ${createdProductId}\n\nNovos dados:\n${JSON.stringify(data.data, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-products', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        async function testDeleteProduct() {
+            if (!createdProductId) {
+                showResult('result-products', '⚠️ Execute "Criar Produto" primeiro!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/products/${createdProductId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('result-products', `✅ PRODUTO DELETADO!\n\nID removido: ${createdProductId}`, 'success');
+                    createdProductId = null;
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-products', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        // TESTE 3: PEDIDOS
+        async function testGetOrders() {
+            try {
+                const response = await fetch(`${API_URL}/orders`);
+                const data = await response.json();
+                
+                if (data.success && Array.isArray(data.data)) {
+                    showResult('result-orders', `✅ ${data.data.length} PEDIDOS ENCONTRADOS!\n\nÚltimos 3:\n${JSON.stringify(data.data.slice(0, 3), null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-orders', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        async function testCreateOrder() {
+            try {
+                const newOrder = {
+                    customer_name: 'Cliente Teste Automatico',
+                    customer_phone: '11999887766',
+                    customer_email: 'teste@automatico.com',
+                    delivery_address: 'Rua Teste, 123',
+                    payment_method: 'PIX',
+                    total: 45.90,
+                    notes: 'Pedido de teste automatizado'
+                };
+
+                const response = await fetch(`${API_URL}/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newOrder)
+                });
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    createdOrderId = data.data.id;
+                    showResult('result-orders', `✅ PEDIDO CRIADO!\n\nID: ${createdOrderId}\nTotal: R$ ${data.data.total}\n\nDados:\n${JSON.stringify(data.data, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-orders', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        async function testUpdateOrderStatus() {
+            if (!createdOrderId) {
+                showResult('result-orders', '⚠️ Execute "Criar Pedido" primeiro!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/orders/${createdOrderId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'CONFIRMED' })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('result-orders', `✅ STATUS ATUALIZADO!\n\nPedido: ${createdOrderId}\nNovo status: CONFIRMED\n\nDados:\n${JSON.stringify(data.data, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-orders', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        // TESTE 4: DASHBOARD
+        async function testDashboard() {
+            try {
+                const response = await fetch(`${API_URL}/admin/dashboard`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('result-dashboard', `✅ DASHBOARD CARREGADO!\n\n${JSON.stringify(data.data, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-dashboard', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        // TESTE 5: ADMIN USERS
+        async function testAdminUsers() {
+            try {
+                const response = await fetch(`${API_URL}/admin/users`);
+                const data = await response.json();
+                
+                if (data.success && Array.isArray(data.data)) {
+                    showResult('result-users', `✅ ${data.data.length} USUÁRIOS ADMIN!\n\n${JSON.stringify(data.data, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-users', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        // TESTE 6: REPORTS
+        async function testReports(period) {
+            try {
+                const response = await fetch(`${API_URL}/admin/reports?period=${period}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('result-reports', `✅ RELATÓRIO (${period})!\n\nReceita: R$ ${data.data.revenue}\nPedidos: ${data.data.orders}\n\n${JSON.stringify(data.data, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-reports', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        // TESTE 7: CATEGORIAS
+        async function testCategories() {
+            try {
+                const response = await fetch(`${API_URL}/categories`);
+                const data = await response.json();
+                
+                if (data.success && Array.isArray(data.data)) {
+                    showResult('result-categories', `✅ ${data.data.length} CATEGORIAS!\n\n${JSON.stringify(data.data, null, 2)}`, 'success');
+                } else {
+                    throw new Error(JSON.stringify(data));
+                }
+            } catch (error) {
+                showResult('result-categories', `❌ ERRO:\n${error.message}`, 'error');
+            }
+        }
+
+        // EXECUTAR TODOS OS TESTES
+        async function runAllTests() {
+            testStats = { total: 0, success: 0, error: 0 };
+            updateStats();
+
+            console.log('🚀 Iniciando bateria completa de testes...');
+
+            // Ordem específica para dependências
+            await testLogin();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testGetProducts();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testCreateProduct();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testUpdateProduct();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testGetOrders();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testCreateOrder();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testUpdateOrderStatus();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testDashboard();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testAdminUsers();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testReports('today');
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testCategories();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            await testDeleteProduct();
+
+            console.log('✅ Bateria de testes completa!');
+            alert(`🎉 Testes Concluídos!\n\nTotal: ${testStats.total}\n✅ Sucesso: ${testStats.success}\n❌ Falhas: ${testStats.error}`);
+        }
+
+        // Auto-executar teste de health ao carregar
+        window.addEventListener('load', () => {
+            console.log('🔥 Sistema de testes carregado!');
+            console.log('Backend:', API_URL);
+        });
+    </script>
+</body>
+</html>

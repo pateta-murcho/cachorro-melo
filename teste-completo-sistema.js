@@ -156,11 +156,11 @@ async function testeAdminLogin() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
-        if (data.success && data.admin) {
-            adminToken = data.token;
-            log(`Login admin OK! Usuário: ${data.admin.name}`, 'success');
-            relatorio.adminLogin = { status: '✅', detalhes: `Admin: ${data.admin.name}` };
-            return data.admin;
+        if (data.success && data.data && data.data.admin) {
+            adminToken = data.data.token;
+            log(`Login admin OK! Usuário: ${data.data.admin.name}`, 'success');
+            relatorio.adminLogin = { status: '✅', detalhes: `Admin: ${data.data.admin.name}` };
+            return data.data.admin;
         } else {
             throw new Error(data.error?.message || 'Credenciais inválidas');
         }

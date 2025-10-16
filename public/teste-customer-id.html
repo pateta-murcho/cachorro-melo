@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Customer ID</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px 0; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste Customer ID</h1>
+    
+    <button onclick="testarPedido()">🛒 Criar Pedido de Teste</button>
+    <button onclick="verificarUltimoPedido()">🔍 Verificar Último Pedido</button>
+    <button onclick="verificarClientes()">👥 Ver Clientes</button>
+    
+    <div id="resultado"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+        
+        async function testarPedido() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>⏳ Criando pedido...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customer_name: 'João da Silva',
+                        customer_phone: '11999887766',
+                        customer_email: 'joao@teste.com',
+                        delivery_address: 'Rua Teste, 123 - Bairro Teste',
+                        payment_method: 'PIX',
+                        total: 75.50,
+                        notes: 'Pedido de teste - validação customer_id'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultado.innerHTML = `
+                        <p class="success">✅ Pedido criado com sucesso!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultado.innerHTML = `
+                        <p class="error">❌ Erro ao criar pedido</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultado.innerHTML = `<p class="error">❌ Erro: ${error.message}</p>`;
+            }
+        }
+        
+        async function verificarUltimoPedido() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>⏳ Buscando último pedido...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/orders?limit=1`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const pedido = data.data[0];
+                    const temCustomerId = pedido.customer_id !== null;
+                    
+                    resultado.innerHTML = `
+                        <h3>${temCustomerId ? '✅ CUSTOMER_ID PRESENTE!' : '❌ CUSTOMER_ID AUSENTE!'}</h3>
+                        <pre>${JSON.stringify(pedido, null, 2)}</pre>
+                    `;
+                } else {
+                    resultado.innerHTML = `<p class="error">❌ Erro ao buscar pedido</p>`;
+                }
+            } catch (error) {
+                resultado.innerHTML = `<p class="error">❌ Erro: ${error.message}</p>`;
+            }
+        }
+        
+        async function verificarClientes() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>⏳ Buscando clientes...</p>';
+            
+            try {
+                // Usando SQL direto via Supabase
+                resultado.innerHTML = `
+                    <h3>👥 Clientes Cadastrados</h3>
+                    <p>Acesse o Supabase Dashboard para ver os clientes:</p>
+                    <p><a href="https://lwwtfodpnqyceuqomopj.supabase.co" target="_blank">Dashboard Supabase</a></p>
+                    <p>Ou verifique no backend logs quando criar um pedido.</p>
+                `;
+            } catch (error) {
+                resultado.innerHTML = `<p class="error">❌ Erro: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -117,7 +117,7 @@ router.get('/:id/tracking', async (req: any, res: any, next: any) => {
         id,
         status,
         created_at,
-        estimated_delivery_time,
+        estimated_delivery,
         customer:customers(name, phone)
       `)
       .eq('id', id)
@@ -247,11 +247,11 @@ router.post('/', async (req: any, res: any, next: any) => {
         id: orderId,
         customer_id: customer.id,
         status: 'PENDING',
-        total_amount: totalAmount,
+        total: totalAmount,
         delivery_address,
         payment_method: payment_method || 'MONEY',
-        notes,
-        estimated_delivery_time: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 min
+        observations: notes,
+        estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 min
       })
       .select()
       .single();
