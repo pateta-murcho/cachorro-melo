@@ -1,8 +1,14 @@
 // API service for real backend integration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (window.location.hostname === 'localhost' 
+  (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168')
     ? 'http://localhost:3001/api'
     : '');
+
+// Só usa mock em produção (Vercel) quando não tem backend
+const USE_MOCK = !API_BASE_URL && window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('192.168');
+
+console.log('🌐 ApiService - API_BASE_URL:', API_BASE_URL);
+console.log('🔄 USE_MOCK:', USE_MOCK);
 
 export interface ApiCartItem {
   product_id: string;
@@ -49,9 +55,6 @@ export interface CreateOrderRequest {
   payment_method: 'CASH' | 'PIX' | 'CARD';
   items: ApiCartItem[];
 }
-
-// Check if backend is available
-const USE_MOCK = !API_BASE_URL || API_BASE_URL === '';
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {

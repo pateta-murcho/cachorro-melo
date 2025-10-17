@@ -1,10 +1,11 @@
 // Detectar automaticamente se está usando localhost ou IP
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (window.location.hostname === 'localhost' 
+  (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168')
     ? 'http://localhost:3001/api'
     : '');
 
-const USE_MOCK = !API_BASE_URL || API_BASE_URL === '';
+// Só usa mock se não estiver em localhost/desenvolvimento
+const USE_MOCK = !API_BASE_URL && window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('192.168');
 
 console.log('🌐 AdminApiService - API_BASE_URL:', API_BASE_URL);
 console.log('🌐 window.location.hostname:', window.location.hostname);
