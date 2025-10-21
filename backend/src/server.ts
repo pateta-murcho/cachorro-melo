@@ -17,6 +17,7 @@ import orderRoutes from './routes/orders';
 import customerRoutes from './routes/customers';
 import adminRoutes from './routes/admin';
 import authRoutes from './routes/auth';
+import delivererRoutes from './routes/deliverer';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -231,6 +232,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/deliverer', delivererRoutes);
 
 // Error handling
 app.use(notFound);

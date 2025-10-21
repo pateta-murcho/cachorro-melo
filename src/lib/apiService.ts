@@ -1,11 +1,8 @@
 // API service for real backend integration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168')
-    ? 'http://localhost:3001/api'
-    : '');
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-// Só usa mock em produção (Vercel) quando não tem backend
-const USE_MOCK = !API_BASE_URL && window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('192.168');
+// Não usar mock em ambiente de desenvolvimento
+const USE_MOCK = false;
 
 console.log('🌐 ApiService - API_BASE_URL:', API_BASE_URL);
 console.log('🔄 USE_MOCK:', USE_MOCK);
@@ -58,15 +55,15 @@ export interface CreateOrderRequest {
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    // If no backend URL, use mock data
+    // If using mock, return mock data
     if (USE_MOCK) {
       console.warn('🔄 Backend não disponível, usando dados mockados');
       return this.getMockData<T>(endpoint);
     }
 
     const url = `${API_BASE_URL}${endpoint}`;
-    
     try {
+      console.log(`📡 Fazendo requisição: ${url}`);
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -77,10 +74,12 @@ class ApiService {
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`❌ Erro HTTP ${response.status}:`, errorText);
         throw new Error(`API Error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log(`✅ Resposta recebida:`, data);
       
       if (!data.success) {
         throw new Error(data.message || 'API request failed');
@@ -88,8 +87,8 @@ class ApiService {
 
       return data.data;
     } catch (error) {
-      console.warn('❌ Erro ao conectar com backend, usando mock:', error);
-      return this.getMockData<T>(endpoint);
+      console.error('❌ Erro ao conectar com backend:', error);
+      throw error;
     }
   }
 

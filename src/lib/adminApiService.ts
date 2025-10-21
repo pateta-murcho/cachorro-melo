@@ -26,17 +26,30 @@ interface ApiResponse<T = any> {
 }
 
 class AdminApiService {
+  // Testa se o backend está online antes de cada request
+  private async checkBackendHealth(): Promise<boolean> {
+    if (USE_MOCK) return true;
+    try {
+      const res = await fetch(`${API_BASE_URL}/health`);
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+    // Testa saúde do backend antes de cada chamada
+    const isHealthy = await this.checkBackendHealth();
+    if (!isHealthy) {
+      throw new Error('Backend offline ou inacessível. Tente novamente mais tarde.');
+    }
     const token = localStorage.getItem('adminToken');
-    
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-
     if (token) {
       defaultHeaders['Authorization'] = `Bearer ${token}`;
     }
-
     const config: RequestInit = {
       method: options.method || 'GET',
       headers: {
@@ -45,16 +58,13 @@ class AdminApiService {
       },
       body: options.body,
     };
-
     const fullUrl = `${API_BASE_URL}${endpoint}`;
     console.log(`📡 API Request: ${options.method || 'GET'} ${fullUrl}`);
-
     // Se está usando mock, retornar dados simulados
     if (USE_MOCK) {
       console.warn('🔄 Usando dados mockados - Backend não configurado');
       return this.getMockResponse<T>(endpoint, options);
     }
-
     try {
       const response = await fetch(fullUrl, config);
       

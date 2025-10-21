@@ -2,12 +2,10 @@
  * API Service para Entregadores/Motoboys
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (window.location.hostname === 'localhost' 
-    ? 'http://localhost:3001/api'
-    : '');
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-const USE_MOCK = !API_BASE_URL || API_BASE_URL === '';
+// Não usar mock em ambiente de desenvolvimento  
+const USE_MOCK = false;
 
 export interface Deliverer {
   id: string;
@@ -112,22 +110,9 @@ class DelivererApiService {
       return data;
     } catch (error) {
       console.error('Erro no login:', error);
-      console.warn('Usando mock fallback');
-      const mockToken = 'mock-deliverer-token-' + Date.now();
-      const mockDeliverer: Deliverer = {
-        id: 'mock-deliverer-1',
-        name: 'Entregador Mock',
-        phone: credentials.phone,
-        vehicle_type: 'MOTORCYCLE',
-        status: 'AVAILABLE',
-        rating: 4.8,
-        total_deliveries: 50
-      };
-      localStorage.setItem('delivererToken', mockToken);
-      localStorage.setItem('delivererData', JSON.stringify(mockDeliverer));
       return {
-        success: true,
-        data: { deliverer: mockDeliverer, token: mockToken }
+        success: false,
+        error: { message: 'Erro ao conectar com o servidor' }
       };
     }
   }
