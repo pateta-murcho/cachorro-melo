@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste BCrypt no Browser</title>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+</head>
+<body>
+    <h1>Teste de BCrypt no Browser</h1>
+    <div id="result"></div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        // Hash gerado no servidor
+        const adminHash = '$2b$10$m7Gg9T/mVm7JQyxwr5Klw.LE1qAVhWLr4ls2KPp6BhTzXtjPwMPJG';
+        const motoHash = '$2b$10$HBg/SqjFbnGgx88IkhZKMu5N41M.Ub57Tef0iW37RuoHhc6a.DC4S';
+        
+        console.log('🔐 Testando bcrypt no browser...');
+        console.log('📦 bcryptjs carregado:', typeof dcodeIO !== 'undefined');
+        console.log('📦 bcrypt.compare:', typeof dcodeIO?.bcrypt?.compare);
+        
+        async function testarValidacao() {
+            try {
+                // Testar validação do admin
+                const validaAdmin = await dcodeIO.bcrypt.compare('admin123', adminHash);
+                console.log('✅ Admin valida:', validaAdmin);
+                resultDiv.innerHTML += `<p>✅ Admin (admin123): ${validaAdmin ? 'VÁLIDO' : 'INVÁLIDO'}</p>`;
+                
+                // Testar validação do motoboy
+                const validaMoto = await dcodeIO.bcrypt.compare('motoboy123', motoHash);
+                console.log('✅ Motoboy valida:', validaMoto);
+                resultDiv.innerHTML += `<p>✅ Motoboy (motoboy123): ${validaMoto ? 'VÁLIDO' : 'INVÁLIDO'}</p>`;
+                
+                // Testar senha errada
+                const validaErrado = await dcodeIO.bcrypt.compare('senhaerrada', adminHash);
+                console.log('❌ Senha errada:', validaErrado);
+                resultDiv.innerHTML += `<p>❌ Senha errada: ${validaErrado ? 'VÁLIDO (ERRO!)' : 'INVÁLIDO (CORRETO)'}</p>`;
+                
+            } catch (error) {
+                console.error('❌ Erro:', error);
+                resultDiv.innerHTML += `<p>❌ ERRO: ${error.message}</p>`;
+            }
+        }
+        
+        testarValidacao();
+    </script>
+</body>
+</html>

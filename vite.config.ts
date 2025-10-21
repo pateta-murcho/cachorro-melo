@@ -19,4 +19,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['bcryptjs']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/bcryptjs/, /node_modules/]
+    }
+  }
 }));
