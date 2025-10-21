@@ -15,7 +15,7 @@ import {
   Clock
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { adminApiService } from "@/lib/adminApiService";
+import { adminApi as adminApiService } from "@/lib/adminApiService";
 
 interface DashboardStats {
   totalOrders: number;

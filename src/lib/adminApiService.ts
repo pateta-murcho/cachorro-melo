@@ -11,7 +11,7 @@ class AdminApiService {
     try {
       const { data: admin, error } = await supabase.from('admins').select('*').eq('email', email).eq('password', password).single();
       if (error || !admin) return { success: false, error: { message: 'Email ou senha incorretos' } };
-      const token = dmin-token--;
+      const token = `admin-token-${admin.id}-${Date.now()}`;
       localStorage.setItem('adminToken', token);
       localStorage.setItem('adminUser', JSON.stringify(admin));
       return { success: true, data: { admin, token } };

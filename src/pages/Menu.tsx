@@ -6,10 +6,84 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { mockProducts, categories, mockStore, CartItem } from "@/lib/mockData";
 import { apiService } from "@/lib/apiService";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+
+interface CartItem {
+  id: string;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  observations?: string;
+}
+
+const categories = [
+  { id: "all", name: "Todos", icon: "🍽️" },
+  { id: "cachorro-quente", name: "Cachorro-Quente", icon: "🌭" },
+  { id: "bebidas", name: "Bebidas", icon: "🥤" },
+  { id: "acompanhamentos", name: "Acompanhamentos", icon: "🍟" },
+  { id: "sobremesas", name: "Sobremesas", icon: "🍰" }
+];
+
+// Local cart management
+const getCart = (): CartItem[] => {
+  const cart = localStorage.getItem('cart');
+  return cart ? JSON.parse(cart) : [];
+};
+
+const saveCart = (cart: CartItem[]) => {
+  localStorage.setItem('cart', JSON.stringify(cart));
+};
+
+const addToCartLocal = (product: Product) => {
+  const cart = getCart();
+  const existingItem = cart.find(item => item.product.id === product.id);
+  
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    cart.push({
+      id: `cart-${Date.now()}`,
+      product: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image
+      },
+      quantity: 1
+    });
+  }
+  
+  saveCart(cart);
+  return cart;
+};
+
+const updateCartItemQuantity = (productId: string, quantity: number) => {
+  const cart = getCart();
+  const item = cart.find(item => item.product.id === productId);
+  
+  if (item) {
+    item.quantity = quantity;
+    saveCart(cart);
+  }
+  
+  return cart;
+};
+
+const removeFromCart = (productId: string) => {
+  const cart = getCart().filter(item => item.product.id !== productId);
+  saveCart(cart);
+  return cart;
+};
+
+const getCartTotal = () => {
+  return getCart().reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+};
 
 export default function Menu() {
   const navigate = useNavigate();
@@ -17,7 +91,7 @@ export default function Menu() {
   const [searchTerm, setSearchTerm] = useState("");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Carregar produtos da API
@@ -44,12 +118,10 @@ export default function Menu() {
       } catch (error) {
         console.error('❌ Erro ao carregar produtos:', error);
         toast({
-          title: "Aviso",
-          description: "Usando dados locais temporariamente",
-          variant: "default"
+          title: "Erro",
+          description: "Não foi possível carregar os produtos",
+          variant: "destructive"
         });
-        // Usar produtos mock como fallback
-        setProducts(mockProducts);
       } finally {
         setIsLoading(false);
       }
@@ -68,8 +140,8 @@ export default function Menu() {
   }, [products, selectedCategory, searchTerm]);
 
   const handleAddToCart = (product: Product) => {
-    mockStore.addToCart(product);
-    setCartItems(mockStore.getCart());
+    const updatedCart = addToCartLocal(product);
+    setCartItems(updatedCart);
     toast({
       title: "Produto adicionado!",
       description: `${product.name} foi adicionado ao carrinho`,
@@ -81,13 +153,13 @@ export default function Menu() {
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
-    mockStore.updateCartItemQuantity(productId, quantity);
-    setCartItems(mockStore.getCart());
+    const updatedCart = updateCartItemQuantity(productId, quantity);
+    setCartItems(updatedCart);
   };
 
   const handleRemoveItem = (productId: string) => {
-    mockStore.removeFromCart(productId);
-    setCartItems(mockStore.getCart());
+    const updatedCart = removeFromCart(productId);
+    setCartItems(updatedCart);
     toast({
       title: "Produto removido",
       description: "Item removido do carrinho",
@@ -170,7 +242,7 @@ export default function Menu() {
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
-        cartTotal={mockStore.getCartTotal()}
+        cartTotal={getCartTotal()}
       />
     </div>
   );

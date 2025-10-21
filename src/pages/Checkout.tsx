@@ -9,9 +9,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, MapPin, Phone, User, CreditCard, QrCode } from "lucide-react";
-import { mockStore, CartItem } from "@/lib/mockData";
 import { apiService, CreateOrderRequest } from "@/lib/apiService";
 import { toast } from "@/hooks/use-toast";
+
+interface CartItem {
+  id: string;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  observations?: string;
+}
 
 interface CustomerInfo {
   name: string;
@@ -20,9 +31,22 @@ interface CustomerInfo {
   observations: string;
 }
 
+const getCart = (): CartItem[] => {
+  const cart = localStorage.getItem('cart');
+  return cart ? JSON.parse(cart) : [];
+};
+
+const getCartTotal = () => {
+  return getCart().reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+};
+
+const clearCart = () => {
+  localStorage.removeItem('cart');
+};
+
 export default function Checkout() {
   const navigate = useNavigate();
-  const [cartItems] = useState<CartItem[]>(mockStore.getCart());
+  const [cartItems] = useState<CartItem[]>(getCart());
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'delivery'>('pix');
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
@@ -32,7 +56,7 @@ export default function Checkout() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const cartTotal = mockStore.getCartTotal();
+  const cartTotal = getCartTotal();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -109,7 +133,7 @@ export default function Checkout() {
       const order = await apiService.createOrder(orderData);
       
       // Limpar carrinho local
-      mockStore.clearCart();
+      clearCart();
       
       // Navigate to meus pedidos com o ID do pedido
       navigate(`/meus-pedidos?orderId=${order.id}`);

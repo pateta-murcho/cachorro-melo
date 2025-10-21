@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { HeaderMobile } from "@/components/HeaderMobile";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,65 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Minus, Plus } from "lucide-react";
-import { mockProducts, mockStore, CartItem } from "@/lib/mockData";
 import { toast } from "@/hooks/use-toast";
+import { apiService } from "@/lib/apiService";
+
+interface CartItem {
+  id: string;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  observations?: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  available: boolean;
+}
+
+// Local cart management
+const getCart = (): CartItem[] => {
+  const cart = localStorage.getItem('cart');
+  return cart ? JSON.parse(cart) : [];
+};
+
+const saveCart = (cart: CartItem[]) => {
+  localStorage.setItem('cart', JSON.stringify(cart));
+};
+
+const addToCart = (product: Product, quantity: number, observations: string) => {
+  const cart = getCart();
+  const existingItem = cart.find(item => item.product.id === product.id);
+  
+  if (existingItem) {
+    existingItem.quantity += quantity;
+    if (observations) existingItem.observations = observations;
+  } else {
+    cart.push({
+      id: `cart-${Date.now()}`,
+      product: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image
+      },
+      quantity,
+      observations
+    });
+  }
+  
+  saveCart(cart);
+  return cart;
+};
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,8 +73,52 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [observations, setObservations] = useState("");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const product = mockProducts.find(p => p.id === id);
+  useEffect(() => {
+    const loadProduct = async () => {
+      try {
+        const products = await apiService.getProducts();
+        const foundProduct = products.find(p => p.id === id);
+        
+        if (foundProduct) {
+          setProduct({
+            id: foundProduct.id,
+            name: foundProduct.name,
+            description: foundProduct.description || '',
+            price: parseFloat(foundProduct.price),
+            image: `/placeholder.svg?height=200&width=300&text=${encodeURIComponent(foundProduct.name)}`,
+            category: foundProduct.category?.name || 'Outros',
+            available: foundProduct.available !== false
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar produto:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar o produto",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProduct();
+    setCartItems(getCart());
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <h2 className="text-xl font-semibold mb-4">Carregando produto...</h2>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -41,10 +142,10 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      mockStore.addToCart(product);
-    }
-    setCartItems(mockStore.getCart());
+    if (!product) return;
+    
+    const updatedCart = addToCart(product, quantity, observations);
+    setCartItems(updatedCart);
     toast({
       title: "Produto adicionado!",
       description: `${quantity}x ${product.name} adicionado ao carrinho`,

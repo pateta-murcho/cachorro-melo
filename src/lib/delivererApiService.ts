@@ -1,11 +1,8 @@
 /**
- * API Service para Entregadores/Motoboys
+ * API Service para Entregadores/Motoboys - 100% Supabase via Backend
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-
-// Não usar mock em ambiente de desenvolvimento  
-const USE_MOCK = false;
 
 export interface Deliverer {
   id: string;
@@ -74,25 +71,6 @@ class DelivererApiService {
 
   // Autenticação
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    if (USE_MOCK) {
-      const mockToken = 'mock-deliverer-token-' + Date.now();
-      const mockDeliverer: Deliverer = {
-        id: 'mock-deliverer-1',
-        name: 'Entregador Mock',
-        phone: credentials.phone,
-        vehicle_type: 'MOTORCYCLE',
-        status: 'AVAILABLE',
-        rating: 4.8,
-        total_deliveries: 50
-      };
-      localStorage.setItem('delivererToken', mockToken);
-      localStorage.setItem('delivererData', JSON.stringify(mockDeliverer));
-      return {
-        success: true,
-        data: { deliverer: mockDeliverer, token: mockToken }
-      };
-    }
-
     try {
       const response = await fetch(`${API_BASE_URL}/deliverer/login`, {
         method: 'POST',

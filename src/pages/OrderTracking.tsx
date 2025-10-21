@@ -4,7 +4,6 @@ import { HeaderMobile } from "@/components/HeaderMobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, 
   Clock, 
@@ -15,39 +14,72 @@ import {
   MapPin,
   QrCode
 } from "lucide-react";
-import { mockStore, Order } from "@/lib/mockData";
 import { toast } from "@/hooks/use-toast";
+import { apiService } from "@/lib/apiService";
 
-const statusConfig = {
-  pending: {
+interface Order {
+  id: string;
+  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
+  total: number;
+  payment_method: 'pix' | 'card' | 'cash';
+  delivery_address: string;
+  customer_name: string;
+  customer_phone: string;
+  otp?: string;
+  estimated_delivery?: string;
+  items: Array<{
+    id: string;
+    quantity: number;
+    product: {
+      id: string;
+      name: string;
+      price: string;
+    };
+  }>;
+}
+
+const statusConfig: Record<Order['status'], {label: string; description: string; icon: any; color: string}> = {
+  PENDING: {
     label: "Pedido Recebido",
-    description: "Seu pedido foi recebido e está sendo preparado",
+    description: "Seu pedido foi recebido",
     icon: CheckCircle,
     color: "bg-blue-500"
   },
-  preparing: {
+  CONFIRMED: {
+    label: "Confirmado",
+    description: "Pedido confirmado e será preparado em breve",
+    icon: CheckCircle,
+    color: "bg-blue-500"
+  },
+  PREPARING: {
     label: "Preparando",
-    description: "Nossos chefs estão preparando seu pedido com carinho",
+    description: "Nossos chefs estão preparando seu pedido",
     icon: ChefHat,
     color: "bg-yellow-500"
   },
-  ready: {
+  READY: {
     label: "Pronto para Entrega",
     description: "Pedido finalizado, aguardando motoboy",
     icon: CheckCircle,
     color: "bg-green-500"
   },
-  out_for_delivery: {
+  OUT_FOR_DELIVERY: {
     label: "Saiu para Entrega",
     description: "Motoboy a caminho do seu endereço",
     icon: Truck,
     color: "bg-blue-600"
   },
-  delivered: {
+  DELIVERED: {
     label: "Entregue",
     description: "Pedido entregue com sucesso! Bom apetite!",
     icon: CheckCircle,
     color: "bg-green-600"
+  },
+  CANCELLED: {
+    label: "Cancelado",
+    description: "Pedido foi cancelado",
+    icon: CheckCircle,
+    color: "bg-red-500"
   }
 };
 
@@ -58,15 +90,40 @@ export default function OrderTracking() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    if (id) {
-      const foundOrder = mockStore.getOrder(id);
-      if (foundOrder) {
-        setOrder(foundOrder);
+    const loadOrder = async () => {
+      if (id) {
+        try {
+          const apiOrder = await apiService.getOrder(id);
+          if (apiOrder) {
+            // Map API order to component order format
+            setOrder({
+              id: apiOrder.id,
+              status: apiOrder.status,
+              total: parseFloat(apiOrder.total_amount),
+              payment_method: apiOrder.payment_method,
+              delivery_address: apiOrder.delivery_address || '',
+              customer_name: apiOrder.customer?.name || '',
+              customer_phone: apiOrder.customer?.phone || '',
+              otp: apiOrder.otp || undefined,
+              estimated_delivery: apiOrder.estimated_delivery_time || undefined,
+              items: apiOrder.items || []
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao carregar pedido:', error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar o pedido",
+            variant: "destructive"
+          });
+        }
       }
-    }
+    };
+
+    loadOrder();
   }, [id]);
 
-  // Simulate real-time updates
+  // Real-time clock update
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -74,33 +131,6 @@ export default function OrderTracking() {
 
     return () => clearInterval(interval);
   }, []);
-
-  // Simulate status progression for demo
-  useEffect(() => {
-    if (!order) return;
-
-    const statusProgression: Order['status'][] = ['pending', 'preparing', 'ready', 'out_for_delivery', 'delivered'];
-    const currentIndex = statusProgression.indexOf(order.status);
-    
-    if (currentIndex < statusProgression.length - 1) {
-      const timeout = setTimeout(() => {
-        const nextStatus = statusProgression[currentIndex + 1];
-        mockStore.updateOrderStatus(order.id, nextStatus, nextStatus === 'out_for_delivery' ? '123456' : undefined);
-        
-        const updatedOrder = mockStore.getOrder(order.id);
-        if (updatedOrder) {
-          setOrder(updatedOrder);
-          
-          toast({
-            title: "Status atualizado!",
-            description: statusConfig[nextStatus].description,
-          });
-        }
-      }, 10000); // Change status every 10 seconds for demo
-
-      return () => clearTimeout(timeout);
-    }
-  }, [order]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {

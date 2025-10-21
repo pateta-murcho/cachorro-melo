@@ -1,11 +1,7 @@
-// API service for real backend integration
+// API service conectando direto ao backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-// Não usar mock em ambiente de desenvolvimento
-const USE_MOCK = false;
-
 console.log('🌐 ApiService - API_BASE_URL:', API_BASE_URL);
-console.log('🔄 USE_MOCK:', USE_MOCK);
 
 export interface ApiCartItem {
   product_id: string;
@@ -55,12 +51,6 @@ export interface CreateOrderRequest {
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    // If using mock, return mock data
-    if (USE_MOCK) {
-      console.warn('🔄 Backend não disponível, usando dados mockados');
-      return this.getMockData<T>(endpoint);
-    }
-
     const url = `${API_BASE_URL}${endpoint}`;
     try {
       console.log(`📡 Fazendo requisição: ${url}`);
@@ -90,17 +80,6 @@ class ApiService {
       console.error('❌ Erro ao conectar com backend:', error);
       throw error;
     }
-  }
-
-  private async getMockData<T>(endpoint: string): Promise<T> {
-    const { mockProducts } = await import('./mockData');
-    
-    if (endpoint.includes('/products')) {
-      return mockProducts as T;
-    }
-    
-    // Retornar array vazio para outros endpoints
-    return [] as T;
   }
 
   // Products
