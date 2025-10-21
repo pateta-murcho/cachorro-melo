@@ -178,18 +178,30 @@ class ApiService {
         customerId = newCustomer.id;
       }
       
-      // 2. Calcular total
+      // 2. Buscar preços dos produtos
+      const productIds = orderData.items.map(item => item.product_id);
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('id, price')
+        .in('id', productIds);
+      
+      if (productsError) throw productsError;
+      
+      // Criar mapa de preços
+      const priceMap = new Map(products?.map(p => [p.id, parseFloat(p.price)]) || []);
+      
+      // 3. Calcular total real
       const total = orderData.items.reduce((sum, item) => {
-        // Buscar preço do produto (simplificado)
-        return sum + (15 * item.quantity); // Preço mock, ideal buscar do DB
+        const price = priceMap.get(item.product_id) || 0;
+        return sum + (price * item.quantity);
       }, 0);
       
-      // 3. Criar order
+      // 4. Criar order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           customer_id: customerId,
-          total: total.toString(),
+          total: total.toFixed(2),
           status: 'PENDING',
           payment_method: orderData.payment_method,
           payment_status: 'PENDING',
@@ -201,12 +213,12 @@ class ApiService {
       
       if (orderError) throw orderError;
       
-      // 4. Criar order_items
+      // 5. Criar order_items com preços reais
       const orderItems = orderData.items.map(item => ({
         order_id: order.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        price: 15, // Preço mock
+        price: priceMap.get(item.product_id) || 0,
         observations: item.observations
       }));
       

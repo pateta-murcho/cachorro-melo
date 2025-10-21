@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, MapPin, Phone, Package, DollarSign, CheckCircle, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface Order {
   id: string;
@@ -50,24 +51,66 @@ export default function MeusPedidos() {
 
   const loadOrders = async () => {
     try {
-      const url = orderId 
-        ? `http://localhost:3001/api/orders/${orderId}`
-        : 'http://localhost:3001/api/orders/customer/recent';
+      console.log('📦 Carregando pedidos do Supabase...');
+      console.log('🔍 Order ID da URL:', orderId);
       
-      const response = await fetch(url);
-      const data = await response.json();
+      let query = supabase
+        .from('orders')
+        .select(`
+          *,
+          customer:customers(name, phone),
+          items:order_items(*, product:products(name))
+        `)
+        .order('created_at', { ascending: false });
 
-      if (data.success) {
-        setOrders(orderId ? [data.data] : data.data);
+      // Se houver orderId específico, filtrar por ele
+      if (orderId) {
+        query = query.eq('id', orderId);
       } else {
-        toast({
-          title: 'Erro ao carregar pedidos',
-          description: data.error?.message || 'Tente novamente',
-          variant: 'destructive',
-        });
+        // Caso contrário, buscar pedidos recentes (últimos 30 dias)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        query = query.gte('created_at', thirtyDaysAgo.toISOString());
       }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('❌ Erro ao buscar pedidos:', error);
+        throw error;
+      }
+
+      console.log('✅ Pedidos encontrados:', data?.length || 0);
+      console.log('📊 Dados:', data);
+
+      // Mapear os dados para o formato esperado
+      const orders = (data || []).map((order: any) => ({
+        id: order.id,
+        status: order.status,
+        total: parseFloat(order.total),
+        payment_method: order.payment_method,
+        delivery_address: order.delivery_address,
+        observations: order.observations,
+        delivery_code: order.otp, // OTP é o código de entrega
+        created_at: order.created_at,
+        delivery_started_at: order.updated_at,
+        items: order.items?.map((item: any) => ({
+          id: item.id,
+          product_name: item.product?.name || 'Produto',
+          quantity: item.quantity,
+          price: parseFloat(item.price)
+        })) || []
+      }));
+
+      console.log('✅ Pedidos mapeados:', orders);
+      setOrders(orders);
     } catch (error) {
-      console.error('Erro:', error);
+      console.error('❌ Erro ao carregar pedidos:', error);
+      toast({
+        title: 'Erro ao carregar pedidos',
+        description: 'Não foi possível carregar seus pedidos. Tente novamente.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
