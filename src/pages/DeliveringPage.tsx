@@ -74,6 +74,7 @@ export default function DeliveringPage() {
   const loadDeliveries = async () => {
     try {
       const response = await delivererApi.getMyDeliveries();
+      console.log('📦 Resposta de entregas:', response);
       
       if (response.success) {
         if (response.data && response.data.length === 0) {
@@ -86,6 +87,12 @@ export default function DeliveringPage() {
           return;
         }
         if (response.data && response.data.length > 0) {
+          console.log('✅ Entregas carregadas:', response.data);
+          console.log('🔐 Códigos de entrega:', response.data.map(d => ({
+            id: d.id,
+            delivery_code: d.delivery_code,
+            customer: d.customer_name
+          })));
           setDeliveries(response.data);
         }
       } else {
@@ -204,6 +211,16 @@ export default function DeliveringPage() {
   };
 
   const currentDelivery = deliveries[currentDeliveryIndex];
+  
+  // Log para debug
+  if (currentDelivery) {
+    console.log('🎯 Entrega atual:', {
+      id: currentDelivery.id,
+      customer: currentDelivery.customer_name,
+      delivery_code: currentDelivery.delivery_code,
+      status: currentDelivery.status
+    });
+  }
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
