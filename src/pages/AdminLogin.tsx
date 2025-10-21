@@ -6,11 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lock, Mail, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Detectar se está acessando por IP ou localhost
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api'
-  : `http://${window.location.hostname}:3001/api`;
+import { adminApi } from "@/lib/adminApiService";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -37,46 +33,30 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      console.log('🔐 Iniciando login...');
+      console.log('🔐 Fazendo login direto no Supabase...');
       console.log('📧 Email:', formData.email);
-      console.log('🌐 API URL:', API_BASE_URL);
       
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      console.log('📡 Status da resposta:', response.status);
-      const result = await response.json();
-      console.log('📥 Resposta do servidor:', result);
+      // USA SUPABASE DIRETO - NÃO PRECISA DE BACKEND!
+      const result = await adminApi.login(formData.email, formData.password);
+      console.log('📥 Resposta do Supabase:', result);
 
       if (!result.success) {
-        throw new Error(result.error?.message || 'Credenciais inválidas');
+        throw new Error(result.error?.message || 'Email ou senha incorretos');
       }
 
-      if (!result.data || !result.data.admin || !result.data.token) {
-        console.error('❌ Estrutura de resposta inválida:', result);
-        throw new Error('Resposta do servidor inválida');
-      }
-
-      // Salvar dados no localStorage
-      console.log('💾 Salvando dados no localStorage...');
-      localStorage.setItem('adminToken', result.data.token);
-      localStorage.setItem('adminData', JSON.stringify(result.data.admin));
+      console.log('✅ Login bem-sucedido!');
+      console.log('� Admin:', result.data.admin.name);
       
-      // Verificar se salvou
-      const verificaToken = localStorage.getItem('adminToken');
-      const verificaData = localStorage.getItem('adminData');
-      console.log('✅ Token salvo:', verificaToken ? 'SIM' : 'NÃO');
-      console.log('✅ Admin salvo:', verificaData ? 'SIM' : 'NÃO');
-      console.log('👤 Admin:', result.data.admin.name);
+      toast({
+        title: "Login realizado!",
+        description: `Bem-vindo, ${result.data.admin.name}!`,
+      });
       
-      // Redirecionar SEM toast irritante
+      // Redirecionar para dashboard
       console.log('🚀 Redirecionando para /admin/dashboard...');
-      window.location.href = '/admin/dashboard';
+      setTimeout(() => {
+        navigate('/admin/dashboard');
+      }, 500);
       
     } catch (error) {
       console.error('❌ Erro no login:', error);

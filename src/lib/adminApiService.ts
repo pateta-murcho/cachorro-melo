@@ -1,4 +1,5 @@
 ﻿import { supabase } from './supabase';
+import bcrypt from 'bcryptjs';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -9,13 +10,42 @@ interface ApiResponse<T = any> {
 class AdminApiService {
   async login(email: string, password: string): Promise<ApiResponse> {
     try {
-      const { data: admin, error } = await supabase.from('admins').select('*').eq('email', email).eq('password', password).single();
-      if (error || !admin) return { success: false, error: { message: 'Email ou senha incorretos' } };
+      console.log('🔐 Buscando admin no Supabase...');
+      
+      // Buscar admin por email (SEM comparar senha ainda)
+      const { data: admin, error } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('email', email)
+        .single();
+      
+      if (error || !admin) {
+        console.log('❌ Admin não encontrado');
+        return { success: false, error: { message: 'Email ou senha incorretos' } };
+      }
+      
+      console.log('👤 Admin encontrado:', admin.name);
+      console.log('🔑 Hash no banco:', admin.password?.substring(0, 10) + '...');
+      console.log('🔑 Senha informada:', password);
+      
+      // Validar senha com bcrypt
+      const senhaValida = await bcrypt.compare(password, admin.password);
+      console.log('✅ Senha válida:', senhaValida);
+      
+      if (!senhaValida) {
+        console.log('❌ Senha incorreta');
+        return { success: false, error: { message: 'Email ou senha incorretos' } };
+      }
+      
+      // Login bem-sucedido
       const token = `admin-token-${admin.id}-${Date.now()}`;
       localStorage.setItem('adminToken', token);
       localStorage.setItem('adminUser', JSON.stringify(admin));
+      
+      console.log('✅ Login bem-sucedido!');
       return { success: true, data: { admin, token } };
     } catch (error: any) {
+      console.error('❌ Erro no login:', error);
       return { success: false, error: { message: error.message } };
     }
   }
