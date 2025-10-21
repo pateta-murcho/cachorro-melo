@@ -4,10 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api'
-  : `http://${window.location.hostname}:3001/api`;
+import { supabase } from "@/lib/supabase";
 
 interface Order {
   id: string;
@@ -39,14 +36,24 @@ export default function AdminKitchen() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/orders?status=PENDING,CONFIRMED,PREPARING`);
-      const result = await response.json();
+      console.log('👨‍🍳 Buscando pedidos da cozinha...');
       
-      if (result.success) {
-        setOrders(result.data || []);
-      }
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          customer:customers(name, phone),
+          items:order_items(*, product:products(name))
+        `)
+        .in('status', ['PENDING', 'CONFIRMED', 'PREPARING'])
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      
+      console.log('✅ Pedidos da cozinha:', data?.length || 0);
+      setOrders(data || []);
     } catch (error) {
-      console.error('Erro ao buscar pedidos:', error);
+      console.error('❌ Erro ao buscar pedidos:', error);
     } finally {
       setLoading(false);
     }
@@ -54,22 +61,26 @@ export default function AdminKitchen() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+      console.log('🔄 Atualizando status do pedido:', orderId, newStatus);
+      
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Status atualizado!",
+        description: `Pedido movido para: ${getStatusText(newStatus)}`
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Status atualizado!",
-          description: `Pedido movido para: ${getStatusText(newStatus)}`
-        });
-        fetchOrders();
-      }
+      
+      fetchOrders();
     } catch (error) {
+      console.error('❌ Erro ao atualizar status:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o status",

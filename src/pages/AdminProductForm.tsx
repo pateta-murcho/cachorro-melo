@@ -7,10 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api'
-  : `http://${window.location.hostname}:3001/api`;
+import { supabase } from "@/lib/supabase";
 
 interface Category {
   id: string;
@@ -45,24 +42,34 @@ export default function AdminProductForm() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories`);
-      const result = await response.json();
-      if (result.success) {
-        setCategories(result.data);
-      }
+      console.log('📂 Buscando categorias...');
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      console.log('✅ Categorias:', data?.length || 0);
+      setCategories(data || []);
     } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
+      console.error('❌ Erro ao buscar categorias:', error);
     }
   };
 
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/products/${id}`);
-      const result = await response.json();
+      console.log('📦 Buscando produto:', id);
       
-      if (result.success && result.data) {
-        const product = result.data;
+      const { data: product, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      
+      if (product) {
         setFormData({
           name: product.name || '',
           description: product.description || '',
@@ -76,7 +83,7 @@ export default function AdminProductForm() {
         });
       }
     } catch (error) {
-      console.error('Erro ao buscar produto:', error);
+      console.error('❌ Erro ao buscar produto:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar o produto",
@@ -103,34 +110,44 @@ export default function AdminProductForm() {
 
     try {
       const productData = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
         price: parseFloat(formData.price),
+        category_id: formData.category_id,
+        image_url: formData.image_url,
+        available: formData.available,
+        featured: formData.featured,
         preparation_time: parseInt(formData.preparation_time) || 15,
-        ingredients: formData.ingredients ? formData.ingredients.split(',').map(i => i.trim()) : []
+        ingredients: formData.ingredients ? formData.ingredients.split(',').map(i => i.trim()) : [],
+        updated_at: new Date().toISOString()
       };
 
-      const url = id ? `${API_BASE_URL}/products/${id}` : `${API_BASE_URL}/products`;
-      const method = id ? 'PUT' : 'POST';
+      console.log(id ? '📝 Atualizando produto...' : '➕ Criando produto...');
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(productData)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Sucesso!",
-          description: id ? "Produto atualizado com sucesso" : "Produto criado com sucesso"
-        });
-        navigate('/admin/produtos');
+      let error;
+      if (id) {
+        // Atualizar produto existente
+        const result = await supabase
+          .from('products')
+          .update(productData)
+          .eq('id', id);
+        error = result.error;
       } else {
-        throw new Error(result.error?.message || 'Erro ao salvar produto');
+        // Criar novo produto
+        const result = await supabase
+          .from('products')
+          .insert([productData]);
+        error = result.error;
       }
+
+      if (error) throw error;
+
+      console.log('✅ Produto salvo com sucesso!');
+      toast({
+        title: "Sucesso!",
+        description: id ? "Produto atualizado com sucesso" : "Produto criado com sucesso"
+      });
+      navigate('/admin/produtos');
     } catch (error) {
       console.error('Erro ao salvar produto:', error);
       toast({
