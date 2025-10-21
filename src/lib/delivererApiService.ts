@@ -1,8 +1,13 @@
 /**
  * API Service para Entregadores/Motoboys - 100% Supabase via Backend
  */
+import { supabase } from './supabase';
+import bcrypt from 'bcryptjs';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const isProduction = window.location.hostname !== 'localhost';
+
+console.log('🏍️ DelivererApiService - Ambiente:', isProduction ? 'PRODUÇÃO' : 'LOCAL');
 
 export interface Deliverer {
   id: string;
@@ -72,6 +77,64 @@ class DelivererApiService {
   // Autenticação
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
+      // Em produção, usar Supabase direto
+      if (isProduction) {
+        console.log('🔥 PRODUÇÃO - Login motoboy via Supabase direto');
+        
+        // Buscar entregador por telefone
+        const { data: deliverer, error } = await supabase
+          .from('deliverers')
+          .select('*')
+          .eq('phone', credentials.phone)
+          .single();
+        
+        if (error || !deliverer) {
+          console.log('❌ Entregador não encontrado');
+          return {
+            success: false,
+            error: { message: 'Telefone ou senha incorretos' }
+          };
+        }
+        
+        console.log('👤 Entregador encontrado:', deliverer.name);
+        
+        // Verificar se senha existe
+        if (!deliverer.password) {
+          return {
+            success: false,
+            error: { message: 'Configuração de conta inválida' }
+          };
+        }
+        
+        // Validar senha com bcrypt
+        let senhaValida = false;
+        try {
+          senhaValida = await bcrypt.compare(credentials.password, deliverer.password);
+        } catch (bcryptError) {
+          console.log('⚠️ Fallback: comparação direta');
+          senhaValida = credentials.password === deliverer.password;
+        }
+        
+        if (!senhaValida) {
+          return {
+            success: false,
+            error: { message: 'Telefone ou senha incorretos' }
+          };
+        }
+        
+        // Login bem-sucedido
+        const token = `token-deliverer-${deliverer.id}-${Date.now()}`;
+        localStorage.setItem('delivererToken', token);
+        localStorage.setItem('delivererData', JSON.stringify(deliverer));
+        
+        console.log('✅ Login motoboy bem-sucedido!');
+        return {
+          success: true,
+          data: { deliverer, token }
+        };
+      }
+      
+      // Local: usar backend
       const response = await fetch(`${API_BASE_URL}/deliverer/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,6 +175,46 @@ class DelivererApiService {
   // Pedidos disponíveis para entrega (status: READY)
   async getAvailableOrders(): Promise<ApiResponse<DeliveryOrder[]>> {
     try {
+      // Em produção, usar Supabase direto
+      if (isProduction) {
+        console.log('🔥 PRODUÇÃO - Buscando pedidos disponíveis do Supabase');
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            customer:customers(name, phone),
+            items:order_items(*, product:products(name))
+          `)
+          .in('status', ['CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'])
+          .is('deliverer_id', null)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        const orders = (data || []).map((order: any) => ({
+          id: order.id,
+          customer_id: order.customer_id,
+          customer_name: order.customer?.name,
+          customer_phone: order.customer?.phone,
+          total: parseFloat(order.total),
+          status: order.status,
+          payment_method: order.payment_method,
+          delivery_address: order.delivery_address,
+          observations: order.observations,
+          delivery_code: order.otp,
+          created_at: order.created_at,
+          items: order.items?.map((item: any) => ({
+            id: item.id,
+            product_name: item.product?.name || 'Produto',
+            quantity: item.quantity,
+            price: parseFloat(item.price)
+          }))
+        }));
+        
+        return { success: true, data: orders };
+      }
+      
+      // Local: usar backend
       const response = await fetch(`${API_BASE_URL}/deliverer/available-orders`, {
         headers: this.getAuthHeaders()
       });
@@ -127,6 +230,51 @@ class DelivererApiService {
   // Pedidos atribuídos ao motoboy (em entrega)
   async getMyDeliveries(): Promise<ApiResponse<DeliveryOrder[]>> {
     try {
+      // Em produção, usar Supabase direto
+      if (isProduction) {
+        console.log('🔥 PRODUÇÃO - Buscando minhas entregas do Supabase');
+        const delivererData = this.getDelivererData();
+        if (!delivererData) {
+          return { success: false, error: { message: 'Não autenticado' } };
+        }
+        
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            customer:customers(name, phone),
+            items:order_items(*, product:products(name))
+          `)
+          .eq('deliverer_id', delivererData.id)
+          .eq('status', 'OUT_FOR_DELIVERY')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        const orders = (data || []).map((order: any) => ({
+          id: order.id,
+          customer_id: order.customer_id,
+          customer_name: order.customer?.name,
+          customer_phone: order.customer?.phone,
+          total: parseFloat(order.total),
+          status: order.status,
+          payment_method: order.payment_method,
+          delivery_address: order.delivery_address,
+          observations: order.observations,
+          delivery_code: order.otp,
+          created_at: order.created_at,
+          items: order.items?.map((item: any) => ({
+            id: item.id,
+            product_name: item.product?.name || 'Produto',
+            quantity: item.quantity,
+            price: parseFloat(item.price)
+          }))
+        }));
+        
+        return { success: true, data: orders };
+      }
+      
+      // Local: usar backend
       const response = await fetch(`${API_BASE_URL}/deliverer/my-deliveries`, {
         headers: this.getAuthHeaders()
       });
@@ -142,6 +290,30 @@ class DelivererApiService {
   // Iniciar entrega (pegar pedidos)
   async startDelivery(orderIds: string[]): Promise<ApiResponse> {
     try {
+      // Em produção, usar Supabase direto
+      if (isProduction) {
+        console.log('🔥 PRODUÇÃO - Iniciando entrega no Supabase');
+        const delivererData = this.getDelivererData();
+        if (!delivererData) {
+          return { success: false, error: { message: 'Não autenticado' } };
+        }
+        
+        // Atualizar pedidos com deliverer_id e status OUT_FOR_DELIVERY
+        const { error } = await supabase
+          .from('orders')
+          .update({
+            deliverer_id: delivererData.id,
+            status: 'OUT_FOR_DELIVERY',
+            updated_at: new Date().toISOString()
+          })
+          .in('id', orderIds);
+        
+        if (error) throw error;
+        
+        return { success: true, data: { message: 'Entrega iniciada com sucesso' } };
+      }
+      
+      // Local: usar backend
       const response = await fetch(`${API_BASE_URL}/deliverer/start-delivery`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
@@ -160,6 +332,41 @@ class DelivererApiService {
   // Confirmar entrega (validar código OTP)
   async confirmDelivery(orderId: string, deliveryCode: string): Promise<ApiResponse> {
     try {
+      // Em produção, usar Supabase direto
+      if (isProduction) {
+        console.log('🔥 PRODUÇÃO - Confirmando entrega no Supabase');
+        
+        // Buscar pedido e validar OTP
+        const { data: order, error } = await supabase
+          .from('orders')
+          .select('otp')
+          .eq('id', orderId)
+          .single();
+        
+        if (error || !order) {
+          return { success: false, error: { message: 'Pedido não encontrado' } };
+        }
+        
+        if (order.otp !== deliveryCode) {
+          return { success: false, error: { message: 'Código de entrega inválido' } };
+        }
+        
+        // Atualizar status para DELIVERED
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({
+            status: 'DELIVERED',
+            delivered_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+        
+        if (updateError) throw updateError;
+        
+        return { success: true, data: { message: 'Entrega confirmada com sucesso' } };
+      }
+      
+      // Local: usar backend
       const response = await fetch(`${API_BASE_URL}/deliverer/confirm-delivery`, {
         method: 'POST',
         headers: this.getAuthHeaders(),

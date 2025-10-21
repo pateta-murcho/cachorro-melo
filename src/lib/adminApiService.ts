@@ -28,8 +28,22 @@ class AdminApiService {
       console.log('🔑 Hash no banco:', admin.password?.substring(0, 10) + '...');
       console.log('🔑 Senha informada:', password);
       
+      // Verificar se senha existe no banco
+      if (!admin.password) {
+        console.error('❌ Admin sem senha cadastrada no banco!');
+        return { success: false, error: { message: 'Configuração de conta inválida' } };
+      }
+      
       // Validar senha com bcrypt
-      const senhaValida = await bcrypt.compare(password, admin.password);
+      let senhaValida = false;
+      try {
+        senhaValida = await bcrypt.compare(password, admin.password);
+      } catch (bcryptError) {
+        console.error('❌ Erro ao validar senha com bcrypt:', bcryptError);
+        // Fallback: comparação direta (caso senha não seja hash)
+        senhaValida = password === admin.password;
+      }
+      
       console.log('✅ Senha válida:', senhaValida);
       
       if (!senhaValida) {
