@@ -58,9 +58,10 @@ class AdminApiService {
       // Login bem-sucedido
       const token = `admin-token-${admin.id}-${Date.now()}`;
       localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminUser', JSON.stringify(admin));
+      localStorage.setItem('adminData', JSON.stringify(admin));
       
       console.log('✅ Login bem-sucedido!');
+      console.log('💾 Dados salvos no localStorage');
       return { success: true, data: { admin, token } };
     } catch (error: any) {
       console.error('❌ Erro no login:', error);
@@ -107,9 +108,20 @@ class AdminApiService {
     }
   }
 
-  logout() { localStorage.removeItem('adminToken'); localStorage.removeItem('adminUser'); }
-  isAuthenticated(): boolean { return !!localStorage.getItem('adminToken'); }
-  getCurrentUser() { const userStr = localStorage.getItem('adminUser'); return userStr ? JSON.parse(userStr) : null; }
+  logout() { 
+    localStorage.removeItem('adminToken'); 
+    localStorage.removeItem('adminData'); 
+    console.log('👋 Logout realizado');
+  }
+  
+  isAuthenticated(): boolean { 
+    return !!localStorage.getItem('adminToken'); 
+  }
+  
+  getCurrentUser() { 
+    const userStr = localStorage.getItem('adminData'); 
+    return userStr ? JSON.parse(userStr) : null; 
+  }
 }
 
 export const adminApi = new AdminApiService();

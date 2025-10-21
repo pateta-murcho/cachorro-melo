@@ -19,15 +19,20 @@ export default function DelivererLogin() {
     setLoading(true);
 
     try {
+      console.log('🔐 Tentando login deliverer...');
       const response = await delivererApi.login({ phone, password });
+      console.log('📥 Resposta login:', response);
 
       if (response.success) {
+        console.log('✅ Login deliverer bem-sucedido!');
         toast({
           title: '✅ Login realizado!',
           description: `Bem-vindo, ${response.data?.deliverer.name}!`,
         });
-        navigate('/motoboy');
+        console.log('🚀 Redirecionando para /motoboy...');
+        navigate('/motoboy', { replace: true });
       } else {
+        console.log('❌ Login falhou:', response.error?.message);
         toast({
           title: '❌ Erro no login',
           description: response.error?.message || 'Credenciais inválidas',
@@ -35,6 +40,7 @@ export default function DelivererLogin() {
         });
       }
     } catch (error) {
+      console.error('❌ Erro no login deliverer:', error);
       toast({
         title: '❌ Erro',
         description: 'Não foi possível conectar ao servidor',

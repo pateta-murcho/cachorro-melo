@@ -24,9 +24,9 @@ export default function AdminLogin() {
     
     if (token && adminData) {
       console.log('✅ Já está logado! Redirecionando para dashboard...');
-      window.location.href = '/admin/dashboard';
+      navigate('/admin/dashboard', { replace: true });
     }
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,18 +45,16 @@ export default function AdminLogin() {
       }
 
       console.log('✅ Login bem-sucedido!');
-      console.log('� Admin:', result.data.admin.name);
+      console.log('👤 Admin:', result.data.admin.name);
       
       toast({
         title: "Login realizado!",
         description: `Bem-vindo, ${result.data.admin.name}!`,
       });
       
-      // Redirecionar para dashboard
+      // Redirecionar para dashboard IMEDIATAMENTE
       console.log('🚀 Redirecionando para /admin/dashboard...');
-      setTimeout(() => {
-        navigate('/admin/dashboard');
-      }, 500);
+      navigate('/admin/dashboard', { replace: true });
       
     } catch (error) {
       console.error('❌ Erro no login:', error);
@@ -65,6 +63,7 @@ export default function AdminLogin() {
         description: error instanceof Error ? error.message : "Verifique suas credenciais",
         variant: "destructive"
       });
+    } finally {
       setLoading(false);
     }
   };
