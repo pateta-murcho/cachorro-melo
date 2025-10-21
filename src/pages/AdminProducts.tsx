@@ -4,10 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api'
-  : `http://${window.location.hostname}:3001/api`;
+import { supabase } from "@/lib/supabase";
 
 interface Product {
   id: string;
@@ -33,15 +30,27 @@ export default function AdminProducts() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/products`);
-      const result = await response.json();
+      console.log('📦 Buscando produtos do Supabase...');
       
-      if (result.success) {
-        setProducts(result.data || []);
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, category:categories(id, name)')
+        .order('name');
+      
+      if (error) {
+        console.error('❌ Erro ao buscar produtos:', error);
+        throw error;
       }
+      
+      console.log('✅ Produtos carregados:', data?.length || 0);
+      setProducts(data || []);
     } catch (error) {
-      console.error('Erro ao buscar produtos:', error);
-      // SEM TOAST IRRITANTE ao carregar - apenas log
+      console.error('❌ Erro ao buscar produtos:', error);
+      toast({
+        title: "Erro ao carregar produtos",
+        description: "Não foi possível carregar a lista de produtos",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -51,20 +60,23 @@ export default function AdminProducts() {
     if (!confirm('Tem certeza que deseja deletar este produto?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
-        method: 'DELETE'
+      console.log('🗑️ Deletando produto:', id);
+      
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Produto deletado com sucesso"
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Sucesso",
-          description: "Produto deletado com sucesso"
-        });
-        fetchProducts();
-      }
+      
+      fetchProducts();
     } catch (error) {
+      console.error('❌ Erro ao deletar produto:', error);
       toast({
         title: "Erro",
         description: "Não foi possível deletar o produto",
@@ -75,22 +87,26 @@ export default function AdminProducts() {
 
   const handleToggleAvailability = async (id: string, currentStatus: boolean) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ available: !currentStatus })
+      console.log('🔄 Alterando disponibilidade:', id, !currentStatus);
+      
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          available: !currentStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Produto ${!currentStatus ? 'ativado' : 'desativado'} com sucesso`
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Sucesso",
-          description: `Produto ${!currentStatus ? 'ativado' : 'desativado'} com sucesso`
-        });
-        fetchProducts();
-      }
+      
+      fetchProducts();
     } catch (error) {
+      console.error('❌ Erro ao atualizar produto:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o produto",

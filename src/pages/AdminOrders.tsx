@@ -4,10 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api'
-  : `http://${window.location.hostname}:3001/api`;
+import { supabase } from "@/lib/supabase";
 
 interface Order {
   id: string;
@@ -17,6 +14,10 @@ interface Order {
   payment_method: string;
   delivery_address: string;
   created_at: string;
+  customer?: {
+    name: string;
+    phone: string;
+  };
 }
 
 export default function AdminOrders() {
@@ -32,15 +33,30 @@ export default function AdminOrders() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/orders`);
-      const result = await response.json();
+      console.log('📦 Buscando pedidos do Supabase...');
       
-      if (result.success) {
-        setOrders(result.data || []);
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          customer:customers(name, phone)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('❌ Erro ao buscar pedidos:', error);
+        throw error;
       }
+      
+      console.log('✅ Pedidos carregados:', data?.length || 0);
+      setOrders(data || []);
     } catch (error) {
-      console.error('Erro ao buscar pedidos:', error);
-      // SEM TOAST IRRITANTE ao carregar - apenas log
+      console.error('❌ Erro ao buscar pedidos:', error);
+      toast({
+        title: "Erro ao carregar pedidos",
+        description: "Não foi possível carregar a lista de pedidos",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -102,6 +118,7 @@ export default function AdminOrders() {
                   <thead className="bg-gray-50 border-b">
                     <tr>
                       <th className="text-left p-3">Pedido</th>
+                      <th className="text-left p-3">Cliente</th>
                       <th className="text-left p-3">Total</th>
                       <th className="text-left p-3">Status</th>
                       <th className="text-left p-3">Pagamento</th>
@@ -115,8 +132,14 @@ export default function AdminOrders() {
                         <td className="p-3 font-mono text-sm">
                           #{order.id.substring(0, 8)}
                         </td>
+                        <td className="p-3">
+                          <div>
+                            <div className="font-medium">{order.customer?.name || 'Cliente'}</div>
+                            <div className="text-sm text-gray-500">{order.customer?.phone}</div>
+                          </div>
+                        </td>
                         <td className="p-3 font-bold">
-                          R$ {order.total.toFixed(2)}
+                          R$ {parseFloat(order.total.toString()).toFixed(2)}
                         </td>
                         <td className="p-3">
                           <span className={`px-2 py-1 rounded text-sm ${getStatusColor(order.status)}`}>
