@@ -37,14 +37,18 @@ class AdminApiService {
       // Validar senha com bcrypt
       let senhaValida = false;
       try {
+        console.log('🔐 Tentando validar com bcrypt...');
+        console.log('🔐 Tipo de bcrypt.compare:', typeof bcrypt.compare);
         senhaValida = await bcrypt.compare(password, admin.password_hash);
+        console.log('✅ Bcrypt validou:', senhaValida);
       } catch (bcryptError) {
         console.error('❌ Erro ao validar senha com bcrypt:', bcryptError);
+        console.log('⚠️ Usando fallback: comparação direta');
         // Fallback: comparação direta (caso senha não seja hash)
         senhaValida = password === admin.password_hash;
       }
       
-      console.log('✅ Senha válida:', senhaValida);
+      console.log('✅ Senha válida (final):', senhaValida);
       
       if (!senhaValida) {
         console.log('❌ Senha incorreta');

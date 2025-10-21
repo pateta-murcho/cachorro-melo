@@ -97,9 +97,13 @@ class DelivererApiService {
       // Validar senha com bcrypt
       let senhaValida = false;
       try {
+        console.log('🔐 Tentando validar com bcrypt...');
+        console.log('🔐 Tipo de bcrypt.compare:', typeof bcrypt.compare);
         senhaValida = await bcrypt.compare(credentials.password, deliverer.password);
+        console.log('✅ Bcrypt validou:', senhaValida);
       } catch (bcryptError) {
-        console.log('⚠️ Fallback: comparação direta');
+        console.error('❌ Erro ao validar senha com bcrypt:', bcryptError);
+        console.log('⚠️ Usando fallback: comparação direta');
         senhaValida = credentials.password === deliverer.password;
       }
       
