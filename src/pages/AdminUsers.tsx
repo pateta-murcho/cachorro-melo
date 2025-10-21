@@ -2,19 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Plus, Edit, Trash2, Shield } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Shield, Bike } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api'
-  : `http://${window.location.hostname}:3001/api`;
+import { supabase } from "@/lib/supabase";
 
 interface User {
   id: string;
   name: string;
-  email: string;
-  role: string;
-  active: boolean;
+  email?: string;
+  phone?: string;
+  role?: string;
+  status?: string;
+  active?: boolean;
+  vehicle_type?: string;
   created_at: string;
 }
 
@@ -31,14 +31,44 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/admin/users`);
-      const result = await response.json();
+      console.log('👥 Buscando usuários...');
       
-      if (result.success) {
-        setUsers(result.data || []);
-      }
+      // Buscar admins e deliverers
+      const [adminsResult, deliverersResult] = await Promise.all([
+        supabase.from('admins').select('*').order('created_at', { ascending: false }),
+        supabase.from('deliverers').select('*').order('created_at', { ascending: false })
+      ]);
+      
+      if (adminsResult.error) throw adminsResult.error;
+      if (deliverersResult.error) throw deliverersResult.error;
+      
+      // Combinar e normalizar dados
+      const allUsers: User[] = [
+        ...(adminsResult.data || []).map(admin => ({
+          id: admin.id,
+          name: admin.name,
+          email: admin.email,
+          role: 'admin',
+          active: admin.active,
+          created_at: admin.created_at
+        })),
+        ...(deliverersResult.data || []).map(deliverer => ({
+          id: deliverer.id,
+          name: deliverer.name,
+          phone: deliverer.phone,
+          email: deliverer.email,
+          role: 'deliverer',
+          status: deliverer.status,
+          vehicle_type: deliverer.vehicle_type,
+          active: deliverer.status !== 'OFFLINE', // Considerar ativo se não estiver OFFLINE
+          created_at: deliverer.created_at
+        }))
+      ];
+      
+      console.log('✅ Usuários carregados:', allUsers.length);
+      setUsers(allUsers);
     } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
+      console.error('❌ Erro ao buscar usuários:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os usuários",
@@ -49,24 +79,30 @@ export default function AdminUsers() {
     }
   };
 
-  const handleToggleActive = async (userId: string, currentStatus: boolean) => {
+  const handleToggleActive = async (userId: string, currentStatus: boolean, role: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: !currentStatus })
+      console.log('🔄 Alternando status do usuário:', userId, role);
+      
+      const table = role === 'admin' ? 'admins' : 'deliverers';
+      const updateData = role === 'admin' 
+        ? { active: !currentStatus }
+        : { status: !currentStatus ? 'AVAILABLE' : 'OFFLINE' };
+      
+      const { error } = await supabase
+        .from(table)
+        .update(updateData)
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Usuário ${!currentStatus ? 'ativado' : 'desativado'} com sucesso`
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Sucesso",
-          description: `Usuário ${!currentStatus ? 'ativado' : 'desativado'} com sucesso`
-        });
-        fetchUsers();
-      }
+      
+      fetchUsers();
     } catch (error) {
+      console.error('❌ Erro ao atualizar usuário:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o usuário",
@@ -161,7 +197,7 @@ export default function AdminUsers() {
                             <Button
                               size="sm"
                               variant={user.active ? "destructive" : "default"}
-                              onClick={() => handleToggleActive(user.id, user.active)}
+                              onClick={() => handleToggleActive(user.id, user.active, user.role)}
                             >
                               {user.active ? 'Desativar' : 'Ativar'}
                             </Button>
