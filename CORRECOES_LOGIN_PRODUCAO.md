@@ -1,22 +1,26 @@
 # ✅ CORREÇÕES LOGIN PRODUÇÃO - SUPABASE
 
-## 🎯 Problemas Corrigidos
+## 🚨 Problemas Encontrados
 
 ### 1. **Referências a Localhost e Backend Local**
-- ❌ **Antes**: `delivererApiService.ts` tinha lógica condicional com `isProduction`
-- ✅ **Depois**: Removida toda lógica condicional, **100% Supabase direto**
+- ❌ **Erro**: "Erro ao conectar com servidor" no login do motoboy
+- ❌ **Causa**: `delivererApiService.ts` tinha lógica condicional que só funcionava em localhost
+- ✅ **Solução**: Removida toda lógica condicional, **100% Supabase direto**
 
 ### 2. **Nome Incorreto da Coluna de Senha (Admin)**
-- ❌ **Antes**: Código procurava `admin.password`
-- ✅ **Depois**: Corrigido para `admin.password_hash`
+- ❌ **Erro**: "Configuração de conta inválida" no login do admin
+- ❌ **Causa**: Código procurava `admin.password`, mas coluna é `password_hash`
+- ✅ **Solução**: Corrigido para `admin.password_hash`
 
 ### 3. **RLS (Row Level Security) Desabilitado**
-- ❌ **Antes**: Todas as tabelas sem RLS e sem políticas
-- ✅ **Depois**: RLS habilitado + políticas de leitura pública criadas
+- ❌ **Erro**: Supabase bloqueava queries (acesso negado)
+- ❌ **Causa**: Todas as tabelas sem RLS e sem políticas
+- ✅ **Solução**: RLS habilitado + políticas de leitura pública criadas
 
 ### 4. **Senhas em Texto Plano**
-- ❌ **Antes**: Senhas armazenadas como texto plano
-- ✅ **Depois**: Senhas com hash bcrypt válido
+- ❌ **Erro**: Validação bcrypt falhava
+- ❌ **Causa**: Senhas armazenadas como texto plano
+- ✅ **Solução**: Senhas atualizadas com hash bcrypt válido
 
 ---
 
@@ -82,13 +86,22 @@ senhaValida = await bcrypt.compare(password, admin.password_hash);
 ## 🚀 Deploy e Testes
 
 ### Verificar no Vercel
-1. As variáveis de ambiente **DEVEM** estar configuradas:
-   ```
-   VITE_SUPABASE_URL=https://lwwtfodpnqyceuqomopj.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3d3Rmb2RwbnF5Y2V1cW9tb3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNzk4MDMsImV4cCI6MjA3NTc1NTgwM30.1cr-bOgfZO97ijgww3sNUPTBEjVMa3RC8pQMOnrmftI
-   ```
 
-2. **Deploy automatizado** ao fazer push para `main`
+#### 1. Variáveis de Ambiente (CRÍTICO!)
+Acesse: https://vercel.com/seu-projeto/settings/environment-variables
+
+**OBRIGATÓRIO** ter estas variáveis:
+```bash
+VITE_SUPABASE_URL=https://lwwtfodpnqyceuqomopj.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3d3Rmb2RwbnF5Y2V1cW9tb3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNzk4MDMsImV4cCI6MjA3NTc1NTgwM30.1cr-bOgfZO97ijgww3sNUPTBEjVMa3RC8pQMOnrmftI
+```
+
+⚠️ **NÃO** adicione `VITE_API_URL` - não usamos mais backend!
+
+#### 2. Deploy
+- Push para `main` dispara deploy automático
+- Aguarde 2-3 minutos
+- Verifique logs em: https://vercel.com/seu-projeto/deployments
 
 ### Testar Login Admin
 1. Acesse: https://cachorro-melo.vercel.app/admin/login
