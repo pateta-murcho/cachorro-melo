@@ -68,22 +68,35 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const dashboardData: any = await adminApiService.getDashboardStats();
+      console.log('📊 Carregando dados do dashboard...');
       
-      // A API retorna { stats: {...} }, então pegamos .stats
-      const statsData = dashboardData.stats || dashboardData;
+      const response = await adminApiService.getDashboardStats();
+      console.log('📥 Resposta getDashboardStats:', response);
+      
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Erro ao carregar estatísticas');
+      }
+      
+      // A API retorna { success: true, data: {...} }
+      const statsData = response.data;
+      console.log('📊 Stats data:', statsData);
       
       setStats({
         totalOrders: statsData.totalOrders || 0,
-        todayOrders: statsData.todayOrders || 0,
+        todayOrders: statsData.totalOrders || 0, // Usando totalOrders como fallback
         totalProducts: statsData.totalProducts || 0,
-        totalRevenue: statsData.todayRevenue || 0,
+        totalRevenue: statsData.totalRevenue || 0,
         pendingOrders: statsData.pendingOrders || 0
       });
-    } catch (error) {
-      console.error("Erro ao carregar dados do dashboard:", error);
       
-      // SEM TOAST IRRITANTE - apenas log no console
+      console.log('✅ Stats atualizados:', {
+        totalOrders: statsData.totalOrders,
+        totalProducts: statsData.totalProducts,
+        pendingOrders: statsData.pendingOrders
+      });
+    } catch (error) {
+      console.error("❌ Erro ao carregar dados do dashboard:", error);
+      
       // Manter valores zerados em caso de erro
       setStats({
         totalOrders: 0,
