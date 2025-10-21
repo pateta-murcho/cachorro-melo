@@ -1,218 +1,68 @@
-// Detectar automaticamente se está usando localhost ou IP
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168')
-    ? 'http://localhost:3001/api'
-    : '');
-
-// Só usa mock se não estiver em localhost/desenvolvimento
-const USE_MOCK = !API_BASE_URL && window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('192.168');
-
-console.log('🌐 AdminApiService - API_BASE_URL:', API_BASE_URL);
-console.log('🌐 window.location.hostname:', window.location.hostname);
-console.log('🔄 USE_MOCK:', USE_MOCK);
-
-interface RequestOptions {
-  method?: string;
-  headers?: Record<string, string>;
-  body?: string;
-}
+﻿import { supabase } from './supabase';
 
 interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
-  error?: {
-    message: string;
-  };
+  error?: { message: string };
 }
 
 class AdminApiService {
-  // Testa se o backend está online antes de cada request
-  private async checkBackendHealth(): Promise<boolean> {
-    if (USE_MOCK) return true;
+  async login(email: string, password: string): Promise<ApiResponse> {
     try {
-      const res = await fetch(`${API_BASE_URL}/health`);
-      return res.ok;
-    } catch {
-      return false;
+      const { data: admin, error } = await supabase.from('admins').select('*').eq('email', email).eq('password', password).single();
+      if (error || !admin) return { success: false, error: { message: 'Email ou senha incorretos' } };
+      const token = dmin-token--;
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminUser', JSON.stringify(admin));
+      return { success: true, data: { admin, token } };
+    } catch (error: any) {
+      return { success: false, error: { message: error.message } };
     }
   }
 
-  private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    // Testa saúde do backend antes de cada chamada
-    const isHealthy = await this.checkBackendHealth();
-    if (!isHealthy) {
-      throw new Error('Backend offline ou inacessível. Tente novamente mais tarde.');
-    }
-    const token = localStorage.getItem('adminToken');
-    const defaultHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (token) {
-      defaultHeaders['Authorization'] = `Bearer ${token}`;
-    }
-    const config: RequestInit = {
-      method: options.method || 'GET',
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-      body: options.body,
-    };
-    const fullUrl = `${API_BASE_URL}${endpoint}`;
-    console.log(`📡 API Request: ${options.method || 'GET'} ${fullUrl}`);
-    // Se está usando mock, retornar dados simulados
-    if (USE_MOCK) {
-      console.warn('🔄 Usando dados mockados - Backend não configurado');
-      return this.getMockResponse<T>(endpoint, options);
-    }
+  async getDashboardStats(): Promise<ApiResponse> {
     try {
-      const response = await fetch(fullUrl, config);
-      
-      console.log(`📥 API Response: ${response.status} ${response.statusText}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ HTTP Error ${response.status}:`, errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result: ApiResponse<T> = await response.json();
-      
-      if (!result.success) {
-        console.error('❌ API Error:', result.error);
-        throw new Error(result.error?.message || 'Erro desconhecido');
-      }
-
-      console.log('✅ API Success:', result.data);
-      return result.data as T;
-    } catch (error) {
-      console.error('❌ API request failed:', error);
-      console.warn('🔄 Fallback para dados mockados');
-      return this.getMockResponse<T>(endpoint, options);
+      const { count: totalOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+      const { count: pendingOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['PENDING', 'CONFIRMED', 'PREPARING']);
+      const { count: deliveringOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'OUT_FOR_DELIVERY');
+      const { count: deliveredOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'DELIVERED');
+      const { count: totalCustomers } = await supabase.from('customers').select('*', { count: 'exact', head: true });
+      const { count: totalProducts } = await supabase.from('products').select('*', { count: 'exact', head: true });
+      const { data: deliveredOrdersData } = await supabase.from('orders').select('total').eq('status', 'DELIVERED');
+      const totalRevenue = deliveredOrdersData?.reduce((sum, order) => sum + parseFloat(order.total), 0) || 0;
+      const { data: recentOrders } = await supabase.from('orders').select('id, total, status, created_at, customers(name, phone)').order('created_at', { ascending: false }).limit(10);
+      return { success: true, data: { totalOrders: totalOrders || 0, pendingOrders: pendingOrders || 0, deliveringOrders: deliveringOrders || 0, deliveredOrders: deliveredOrders || 0, totalCustomers: totalCustomers || 0, totalProducts: totalProducts || 0, totalRevenue, recentOrders: recentOrders || [] } };
+    } catch (error: any) {
+      return { success: false, error: { message: error.message } };
     }
   }
 
-  private getMockResponse<T>(endpoint: string, options: RequestOptions): Promise<T> {
-    // Mock para login
-    if (endpoint.includes('/admin/login')) {
-      const mockToken = 'mock-admin-token-' + Date.now();
-      localStorage.setItem('adminToken', mockToken);
-      return Promise.resolve({
-        user: { id: '1', email: 'admin@cachorromelo.com', name: 'Admin Mock', role: 'ADMIN' },
-        token: mockToken
-      } as T);
+  async getOrders(filters?: any): Promise<ApiResponse> {
+    try {
+      let query = supabase.from('orders').select('*, customers(name, phone, email), order_items(id, quantity, price, products(name))').order('created_at', { ascending: false });
+      if (filters?.status) query = query.eq('status', filters.status);
+      const { data, error } = await query;
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error: any) {
+      return { success: false, error: { message: error.message } };
     }
+  }
 
-    // Mock para dashboard
-    if (endpoint.includes('/admin/dashboard')) {
-      return Promise.resolve({
-        totalOrders: 150,
-        totalRevenue: 15000,
-        pendingOrders: 5,
-        completedOrders: 145
-      } as T);
+  async updateOrderStatus(orderId: string, status: string): Promise<ApiResponse> {
+    try {
+      const { data, error } = await supabase.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', orderId).select().single();
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error: any) {
+      return { success: false, error: { message: error.message } };
     }
-
-    // Mock para produtos
-    if (endpoint.includes('/products')) {
-      return import('./mockData').then(({ mockProducts }) => mockProducts as T);
-    }
-
-    // Mock genérico
-    return Promise.resolve([] as T);
   }
 
-  // Autenticação
-  async login(email: string, password: string) {
-    return this.request('/admin/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-  }
-
-  async register(userData: any) {
-    return this.request('/admin/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-  }
-
-  // Dashboard
-  async getDashboardStats() {
-    return this.request('/admin/dashboard');
-  }
-
-  // Produtos
-  async getProducts() {
-    return this.request('/products?available=all');
-  }
-
-  async createProduct(productData: any) {
-    return this.request('/products', {
-      method: 'POST',
-      body: JSON.stringify(productData),
-    });
-  }
-
-  async updateProduct(id: string, productData: any) {
-    return this.request(`/products/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(productData),
-    });
-  }
-
-  async deleteProduct(id: string) {
-    return this.request(`/products/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Pedidos
-  async getOrders() {
-    return this.request('/orders');
-  }
-
-  async getActiveOrders() {
-    return this.request('/orders?status=CONFIRMED,PREPARING,READY');
-  }
-
-  async updateOrder(id: string, orderData: any) {
-    return this.request(`/orders/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(orderData),
-    });
-  }
-
-  async deleteOrder(id: string) {
-    return this.request(`/orders/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Categorias
-  async getCategories() {
-    return this.request('/categories');
-  }
-
-  async createCategory(categoryData: any) {
-    return this.request('/categories', {
-      method: 'POST',
-      body: JSON.stringify(categoryData),
-    });
-  }
-
-  async updateCategory(id: string, categoryData: any) {
-    return this.request(`/categories/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(categoryData),
-    });
-  }
-
-  async deleteCategory(id: string) {
-    return this.request(`/categories/${id}`, {
-      method: 'DELETE',
-    });
-  }
+  logout() { localStorage.removeItem('adminToken'); localStorage.removeItem('adminUser'); }
+  isAuthenticated(): boolean { return !!localStorage.getItem('adminToken'); }
+  getCurrentUser() { const userStr = localStorage.getItem('adminUser'); return userStr ? JSON.parse(userStr) : null; }
 }
 
-export const adminApiService = new AdminApiService();
+export const adminApi = new AdminApiService();
+export default adminApi;

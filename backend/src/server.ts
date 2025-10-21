@@ -90,6 +90,15 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Health check em /api/health também
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Página inicial da API
 app.get('/', (req, res) => {
   res.send(`

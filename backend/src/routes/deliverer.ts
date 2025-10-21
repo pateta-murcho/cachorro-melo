@@ -100,7 +100,7 @@ router.post('/login', async (req: any, res: any) => {
   }
 });
 
-// PEDIDOS DISPONÍVEIS PARA ENTREGA (status: READY ou CONFIRMED)
+// PEDIDOS DISPONÍVEIS PARA ENTREGA (status: READY ou CONFIRMED ou OUT_FOR_DELIVERY órfãos)
 router.get('/available-orders', authenticateDeliverer, async (req: any, res: any) => {
   try {
     console.log('📦 Buscando pedidos disponíveis...');
@@ -124,7 +124,7 @@ router.get('/available-orders', authenticateDeliverer, async (req: any, res: any
           )
         )
       `)
-      .in('status', ['CONFIRMED', 'PREPARING', 'READY'])
+      .in('status', ['CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'])
       .is('deliverer_id', null)
       .order('created_at', { ascending: true });
 
